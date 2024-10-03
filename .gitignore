@@ -1,0 +1,16 @@
+**/classes
+**/target
+**/.artifacts
+**/.cpcache
+**/.DS_Store
+**/.gradle
+
+# nrepl
+.nrepl-port
+
+# clojure-lsp
+.lsp/.cache
+
+.clj-kondo/
+
+.dir-locals.el

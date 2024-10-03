@@ -1,0 +1,107 @@
+(ns zodiac.core-test
+  (:require [clojure.test :refer :all]
+            [integrant.core :as ig]
+            [matcher-combinators.test :refer [match?]]
+            [reitit.ring :as rr]
+            [spy.core :as spy]
+            [zodiac.core :as z]))
+
+(defn test-client [options]
+  (-> {:start-server? false
+       :cookie-secret "1234567890123456"}
+      (merge options)
+      z/start
+      ::z/app))
+
+(deftest url-for
+  (testing "should accept only a route name"
+    (binding [z/*router* (rr/router ["/" {:name :root}])]
+      (is (match? "/" (z/url-for :root)))))
+  (testing "should accept only a path name"
+    (binding [z/*router* (rr/router ["/" {:name :root}])]
+      (is (match? "/" (z/url-for "/")))))
+  (testing "should accept route args"
+    (binding [z/*router* (rr/router ["/:id" {:name :root}])]
+      (is (match? "/1" (z/url-for :root {:id 1})))))
+  (testing "should accept route args"
+    (binding [z/*router* (rr/router ["/:id" {:name :root}])]
+      (is (match? "/1" (z/url-for :root {:id 1})))))
+  (testing "should accept route args and query params"
+    (binding [z/*router* (rr/router ["/:id" {:name :root}])]
+      (is (match? "/1?q=something"
+                  (z/url-for :root {:id 1} {"q" "something"})))))
+  (testing "should return nil for invalid path args"
+    (binding [z/*router* (rr/router ["/:id" {:name :root}])]
+      (is (nil? (z/url-for :root {:id2 1}))))))
+
+(deftest html-response
+  (testing "should render html"
+    (is (match? {:status 200
+                 :headers {"content-type" "text/html"}
+                 :body "<!DOCTYPE html><hi></hi>"}
+                (z/html-response [:hi]))))
+  (testing "should render html with status "
+    (is (match? {:status 123
+                 :headers {"content-type" "text/html"}
+                 :body "<!DOCTYPE html><hi></hi>"}
+                (z/html-response 123 [:hi]))))
+  (testing "shouldn't render string body"
+    (is (match? {:status 200
+                 :headers {"content-type" "text/html"}
+                 :body "hi"}
+                (z/html-response "hi")))))
+
+(deftest json-response
+  (testing "should render josn"
+    (is (match? {:status 200
+                 :headers {"content-type" "application/json"}
+                 :body "{\"x\":1}"}
+                (z/json-response {:x 1}))))
+  (testing "should render json with status "
+    (is (match? {:status 123
+                 :headers {"content-type" "application/json"}
+                 :body "{\"x\":1}"}
+                (z/json-response 123 {:x 1}))))
+  (testing "shouldn't render string body"
+    (is (match? {:status 200
+                 :headers {"content-type" "application/json"}
+                 :body "hi"}
+                (z/json-response "hi")))))
+
+(defmethod ig/init-key ::service [_ {:keys [value]}]
+  value)
+
+(deftest wrap-context
+  (testing "puts data in request context"
+    (let [handler (spy/spy (fn [_] {}))
+          app (test-client {:request-context {:db "something"}
+                            :routes ["/" {:name :root
+                                          :handler handler}]})]
+      (app {:request-method :get
+            :uri "/"})
+      (is (match? {::z/context {:db "something"} }
+                  (first (spy/first-call handler)))))))
+
+(deftest extensions
+  (testing "extensions can modify the system config"
+    (let [handler (spy/spy (fn [_] {}))
+          app (test-client {:routes ["/" {:name :root
+                                          :handler handler}]
+                            :extensions [(fn [cfg]
+                                           (-> cfg
+                                               (assoc ::service {:value "something"})
+                                               (assoc-in [::z/middleware :context :service] (ig/ref ::service))))]})]
+      (app {:request-method :get
+            :uri "/"})
+      (is (match? {::z/context {:service "something"} }
+                  (first (spy/first-call handler)))))))
+
+(deftest render-html-middlware
+  (testing "returning vector renders html"
+    (let [app (test-client {:routes ["/" {:name :root
+                                          :handler (fn [_] [:hi])}]})]
+      (is (match? {:status 200
+                   :headers {"content-type" "text/html"}
+                   :body "<!DOCTYPE html><hi></hi>"}
+                  (app {:request-method :get
+                        :uri "/"}))))))

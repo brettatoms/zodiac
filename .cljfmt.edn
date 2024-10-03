@@ -1,0 +1,4 @@
+{:sort-ns-references? true
+ ;; :function-arguments-indentation :cursive
+ :parallel? true
+ :paths ["src" "test"]}
