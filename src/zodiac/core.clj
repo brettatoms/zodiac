@@ -235,15 +235,3 @@
 
 (defn stop [system]
   (ig/halt! system))
-
-
-
-(ns myapp
-  (:require [zodiac.core :as z]))
-
-(defn routes []
-  ;; routes use the reitit route syntax
-  ["/" {:handler (constantly {:status 200
-                              :body [:div "hi"]})}])
-
-(z/start {:routes #'routes})
