@@ -5,6 +5,17 @@
 **/.DS_Store
 **/.gradle
 
+settings.xml
+pom.xml
+
+devbox.json
+devbox.lock
+
+.envrc
+.env.local
+
+
+
 # nrepl
 .nrepl-port
 

@@ -89,5 +89,5 @@ Zodiac can be extended using a sequence of functions that take an integrant syst
 
 Zodiac wouldn't be possible if not for the following people:
 
-- James Reeves ([weavejest](https://github.com/weavejester)): Ring, integrant, cljfmt, etc
+- James Reeves ([weavejester](https://github.com/weavejester)): Ring, integrant, cljfmt, etc
 - [Metosin](https://github.com/metosin): [reitit](https://github.com/metosin/reitit), [malli](https://github.com/metosin/mallireitit), etc
