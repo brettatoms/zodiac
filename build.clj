@@ -3,7 +3,7 @@
             [deps-deploy.deps-deploy :as dd]))
 
 (def lib 'com.github.brettatoms/zodiac)
-(def version (format "0.0.1"))
+(def version (format "0.0.3"))
 (def snapshot (str version "-SNAPSHOT"))
 (def class-dir "target/classes")
 (def jar-file (format "target/%s-%s.jar" (name lib) version))
@@ -54,6 +54,8 @@
 
 (defn deploy "Deploy the JAR to Clojars." [opts]
   (let [{:keys [jar-file] :as opts} (jar-opts opts)]
-    (dd/deploy {:installer :remote :artifact (b/resolve-path jar-file)
+    (b/write-pom opts)
+    (dd/deploy {:installer :remote
+                :artifact (b/resolve-path jar-file)
                 :pom-file (b/pom-path (select-keys opts [:lib :class-dir]))}))
   opts)

@@ -103,10 +103,81 @@
 
 (deftest render-html-middlware
   (testing "returning vector renders html"
-    (let [app (test-client {:routes ["/" {:name :root
-                                          :handler (fn [_] [:hi])}]})]
+    (let [app (test-client {:routes ["/" (constantly [:hi])]})]
       (is (match? {:status 200
                    :headers {"content-type" "text/html"}
                    :body "<!DOCTYPE html><hi></hi>"}
                   (app {:request-method :get
                         :uri "/"}))))))
+
+(deftest parses-form-params
+  (testing "parses form params"
+    (let [post-handler (fn [{:keys [form-params]}]
+                    (z/html-response (get form-params "value")))
+          app (test-client {:routes ["/" {:get csrf-handler
+                                          :post post-handler}]})
+          ;; Get the CSRF token
+          sess (-> (peri/session app)
+                   (peri/request "/"))
+          token (-> sess :response :body)
+          resp (-> sess
+                   (peri/request "/"
+                                 :request-method :post
+                                 :headers {"X-CSRF-Token" token}
+                                 :params {:value "hi"})
+                   :response)]
+      (is (match? {:status 200
+                   :headers {"content-type" "text/html"}
+                   :body "hi"}
+                  resp)))))
+
+(deftest parses-json-body
+  (testing "parses json body params"
+    (let [post-handler (fn [{:keys [body-params] :as request}]
+                         (z/html-response (:hello body-params)))
+          app (test-client {:routes ["/" {:get csrf-handler
+                                          :post post-handler}]})
+          ;; Get the CSRF token
+          sess (-> (peri/session app)
+                   (peri/request "/"))
+          token (-> sess :response :body)
+          resp (-> sess
+                   (peri/request "/"
+                                 :request-method :post
+                                 :headers {"X-CSRF-Token" token}
+                                 :content-type "application/json"
+                                 :body "{\"hello\": \"world\"}")
+                   :response)]
+      (is (match? {:status 200
+                   :headers {"content-type" "text/html"}
+                   :body "world"}
+                  resp))))
+
+  (testing "handles invalid json"
+    (let [post-handler (constantly nil)  ;; never called
+          app (test-client {:routes ["/" {:get csrf-handler
+                                          :post post-handler}]})
+          ;; Get the CSRF token
+          sess (-> (peri/session app)
+                   (peri/request "/"))
+          token (-> sess :response :body)
+          resp (-> sess
+                   (peri/request "/"
+                                 :request-method :post
+                                 :headers {"X-CSRF-Token" token}
+                                 :content-type "application/json"
+                                 :body "not json")
+                   :response)]
+      (is (match? {:status 400
+                   :body "Malformed \"application/json\" request."}
+                  resp)))))
+
+(deftest exception-handling
+  (testing "handles exceptions"
+    (let [handler (fn [_] (throw (ex-info "somethnig" {})))
+          app (test-client {:routes ["/" {:get handler}]})
+          resp (app {:request-method :get
+                     :uri "/"})]
+      (is (match? {:status 500
+                   :body "Unknown error"}
+                  resp)))))
