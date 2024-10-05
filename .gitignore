@@ -14,8 +14,6 @@ devbox.lock
 .envrc
 .env.local
 
-
-
 # nrepl
 .nrepl-port
 

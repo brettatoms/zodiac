@@ -9,22 +9,25 @@
         metosin/reitit-dev {:mvn/version "0.7.2"}
         metosin/reitit-middleware {:mvn/version "0.7.2"}
         org.clojure/data.json {:mvn/version "2.4.0"}
+        org.clojure/tools.logging {:mvn/version "1.3.0"}
         ring/ring-anti-forgery {:mvn/version "1.3.1"}
         ring/ring-core {:mvn/version "1.12.2"}
         ring/ring-devel {:mvn/version "1.12.2"}}
  :aliases {:dev {:extra-paths ["development/src"]
-                 :extra-deps {}
+                 :extra-deps {com.taoensso/telemere {:mvn/version "1.0.0-beta25"}}
                  ;; OmitStackTraceInFastThrow add stacktraces when running in a
                  ;; repl that might otherwise have been optimized out, see
                  ;; https://docs.cider.mx/cider/troubleshooting.html#empty-java-stacktraces
                  :jvm-opts ["-XX:-OmitStackTraceInFastThrow"]}
 
            :test {:extra-paths ["test"]
-                                :extra-deps {tortue/spy {:mvn/version "2.15.0"}
-                                             com.gfredericks/test.chuck {:mvn/version "0.2.14"}
+                                :extra-deps {com.gfredericks/test.chuck {:mvn/version "0.2.14"}
+                                             com.taoensso/telemere-slf4j {:mvn/version "1.0.0-beta25"}
                                              lambdaisland/kaocha {:mvn/version "1.89.1380"}
                                              nubank/matcher-combinators {:mvn/version "3.9.1"}
-                                             org.clojure/test.check {:mvn/version "1.1.1"}}}
+                                             org.clojure/test.check {:mvn/version "1.1.1"}
+                                             peridot/peridot {:mvn/version "0.5.4"}
+                                             tortue/spy {:mvn/version "2.15.0"}}}
 
            :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}
                           slipset/deps-deploy {:mvn/version "0.2.2"}}

@@ -1,5 +1,6 @@
 (ns zodiac.core
   (:require [clojure.data.json :as json]
+            [clojure.tools.logging :as log]
             [dev.onionpancakes.chassis.core :as chassis]
             [integrant.core :as ig]
             [malli.core :as m]
@@ -12,6 +13,7 @@
             [reitit.ring]
             [reitit.ring.coercion :as coercion]
             [reitit.ring.middleware.dev :as dev]
+            [reitit.ring.middleware.exception :as exception]
             [reitit.ring.middleware.multipart :as multipart]
             [reitit.ring.middleware.muuntaja :as muuntaja.middle]
             [reitit.ring.middleware.parameters :as parameters]
@@ -94,6 +96,38 @@
                         (bytes? secret) secret
                         (string? secret) (.getBytes secret))}))
 
+
+;; type hierarchy
+(derive ::error ::exception)
+(derive ::failure ::exception)
+(derive ::horror ::exception)
+
+(defn- exception-handler [message exception _request]
+  (log/error (str message "\n" exception))
+  (log/error exception)
+  {:status 500
+   :body "Unknown error"})
+
+(def exception-middleware
+  (exception/create-exception-middleware
+   (merge exception/default-handlers
+          {;; ex-data with :type ::error
+           ::error (partial exception-handler "error")
+
+           ;; ex-data with ::exception or ::failure
+           ::exception (partial exception-handler "exception")
+
+           ;; SQLException and all it's child classes
+           java.sql.SQLException (partial exception-handler "sql-exception")
+
+           ;; override the default handler
+           ::exception/default (partial exception-handler "default")
+
+           ;; print stack-traces for all exceptions
+           ::exception/wrap (fn [handler e request]
+                              (println "ERROR" (pr-str (:uri request)))
+                              (handler e request))})))
+
 (defmethod ig/init-key ::middleware [_ {:keys [context session-store cookie-attrs]}]
   [;; Read and write cookies
    wrap-cookies
@@ -109,12 +143,12 @@
    muuntaja.middle/format-negotiate-middleware
    ;; Encoding response body
    muuntaja.middle/format-response-middleware
+   ;; exception handling
+   exception/exception-middleware
    ;; Flash messages in the session
    wrap-flash
    ;; Check CSRF tokens
    wrap-anti-forgery
-   ;; Print out stacktraces
-   stacktrace/wrap-stacktrace-web
    ;; decoding request body
    muuntaja.middle/format-request-middleware
    ;; coercing response bodys
@@ -126,11 +160,9 @@
    ;; Populate the request context
    [wrap-context context]
    ;; Vectors that are returned by handlers will be rendered to html
-   render-html-middleware])
-
-(def error-handlers
-  {:not-found (constantly {:status 404
-                           :body "Not found"})})
+   render-html-middleware
+   ;; Handle exceptions
+   exception-middleware])
 
 (defmethod ig/init-key ::app [_ {:keys [routes middleware reload-per-request? print-request-diffs?]}]
   (when (and reload-per-request?
@@ -138,7 +170,10 @@
                  (not (fn? (var-get routes)))))
     (println "WARNING: For :reload-per-request? to work you need to pass a function var for routes."))
 
-  (let [router-options (cond-> {:exception pretty/exception
+  (let [router-options (cond-> {;; Use for pretty exceptions for route
+                                ;; definition errors and not exceptions during
+                                ;; requests
+                                :exception pretty/exception
                                 :data {:muuntaja muuntaja/instance
                                        :middleware middleware}}
                          ;; Print out a diff of the request between each
@@ -156,7 +191,7 @@
         create-handler (fn []
                          (reitit.ring/ring-handler
                            (reitit.ring/router (routes) router-options)
-                           (reitit.ring/create-default-handler error-handlers)))]
+                           (reitit.ring/create-default-handler)))]
     (if reload-per-request?
       (reitit.ring/reloading-ring-handler create-handler)
       (create-handler))))

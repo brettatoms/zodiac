@@ -2,7 +2,9 @@
   (:require [clojure.test :refer :all]
             [integrant.core :as ig]
             [matcher-combinators.test :refer [match?]]
+            [peridot.core :as peri]
             [reitit.ring :as rr]
+            [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]
             [spy.core :as spy]
             [zodiac.core :as z]))
 
@@ -12,6 +14,9 @@
       (merge options)
       z/start
       ::z/app))
+
+(defn csrf-handler [_]
+  {:body *anti-forgery-token*})
 
 (deftest url-for
   (testing "should accept only a route name"
