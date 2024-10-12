@@ -69,7 +69,7 @@
          (r/match-by-name name-or-path args)
          (r/match->path query-params)))))
 
-(defn wrap-context [handler context]
+(defn- context-middleware [handler context]
   (fn [request]
     (-> request
         (assoc ::context context)
@@ -82,7 +82,7 @@
         (html-response response)
         response))))
 
-(defn bind-globals-middlware [handler]
+(defn- bind-globals-middleware [handler]
   (fn [{:keys [session ::r/router] :as request}]
     (binding [*request* request
               *router* router
@@ -105,7 +105,7 @@
   {:status 500
    :body "Unknown error"})
 
-(def exception-middleware
+(def ^:private exception-middleware
   (exception/create-exception-middleware
    (merge exception/default-handlers
           {;; ex-data with :type ::error
@@ -153,9 +153,9 @@
    ;; coercing request parameters
    coercion/coerce-request-middleware
    ;; Bind the request globals
-   bind-globals-middlware
+   bind-globals-middleware
    ;; Populate the request context
-   [wrap-context context]
+   [context-middleware context]
    ;; Vectors that are returned by handlers will be rendered to html
    render-html-middleware
    ;; Handle exceptions
