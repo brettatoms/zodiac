@@ -246,7 +246,8 @@
      (println "WARNING: Invalid options: " (me/humanize (m/explain Options options)))
      (let [config (cond-> {::cookie-store {:secret (:cookie-secret options)}
                            ::middleware {:context (:request-context options {})
-                                         :cookie-attrs (:cookie-attrs options {:http-only true})
+                                         :cookie-attrs (:cookie-attrs options {:http-only true
+                                                                               :same-site :lax})
                                          :session-store (ig/ref ::cookie-store)}
                            ::app {:routes (:routes options [])
                                   :middleware (ig/ref ::middleware)
