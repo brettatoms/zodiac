@@ -1,4 +1,5 @@
 (ns build
+  (:refer-clojure :exclude [test])
   (:require [clojure.tools.build.api :as b]
             [deps-deploy.deps-deploy :as dd]))
 
@@ -13,6 +14,12 @@
 
 (defn clean [_]
   (b/delete {:path "target"}))
+
+(defn test "Run all the tests." [opts]
+  (b/process {:command-args ["clojure" "-M:test"]})
+  (b/process {:command-args ["clojure" "-M:clj-kondo" "--lint" "src"]})
+  (b/process {:command-args ["clojure" "-M:cljfmt" "check"]})
+  opts)
 
 (defn- pom-template [version]
   [[:description "A simple and extensible web framework for Clojure"]
