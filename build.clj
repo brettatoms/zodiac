@@ -3,7 +3,7 @@
             [deps-deploy.deps-deploy :as dd]))
 
 (def lib 'com.github.brettatoms/zodiac)
-(def version (format "0.0.3"))
+(def version (format "0.0.4"))
 (def snapshot (str version "-SNAPSHOT"))
 (def class-dir "target/classes")
 (def jar-file (format "target/%s-%s.jar" (name lib) version))
