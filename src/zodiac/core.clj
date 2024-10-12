@@ -94,7 +94,6 @@
                         (bytes? secret) secret
                         (string? secret) (.getBytes secret))}))
 
-
 ;; type hierarchy
 (derive ::error ::exception)
 (derive ::failure ::exception)
@@ -164,7 +163,7 @@
 
 (defmethod ig/init-key ::app [_ {:keys [routes middleware reload-per-request? print-request-diffs?]}]
   (when (and reload-per-request?
-             (or (not (var? routes) )
+             (or (not (var? routes))
                  (not (fn? (var-get routes)))))
     (println "WARNING: For :reload-per-request? to work you need to pass a function var for routes."))
 
@@ -188,8 +187,8 @@
                  :else (constantly routes))
         create-handler (fn []
                          (reitit.ring/ring-handler
-                           (reitit.ring/router (routes) router-options)
-                           (reitit.ring/create-default-handler)))]
+                          (reitit.ring/router (routes) router-options)
+                          (reitit.ring/create-default-handler)))]
     (if reload-per-request?
       (reitit.ring/reloading-ring-handler create-handler)
       (create-handler))))

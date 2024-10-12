@@ -31,5 +31,9 @@ jobs:
             ~/.clojure
             ~/.cpcache
           key: ${{ runner.os }}-${{ hashFiles('**/deps.edn') }}
+      - name: Lint
+        run: clojure -M:clj-kondo --lint src
+      - name: Check formatting
+        run: clojure -M:cljfmt check
       - name: Run All Tests
         run: clojure -M:test

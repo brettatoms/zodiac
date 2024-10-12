@@ -84,7 +84,7 @@
                                           :handler handler}]})]
       (app {:request-method :get
             :uri "/"})
-      (is (match? {::z/context {:db "something"} }
+      (is (match? {::z/context {:db "something"}}
                   (first (spy/first-call handler)))))))
 
 (deftest extensions
@@ -98,7 +98,7 @@
                                                (assoc-in [::z/middleware :context :service] (ig/ref ::service))))]})]
       (app {:request-method :get
             :uri "/"})
-      (is (match? {::z/context {:service "something"} }
+      (is (match? {::z/context {:service "something"}}
                   (first (spy/first-call handler)))))))
 
 (deftest render-html-middlware
@@ -113,7 +113,7 @@
 (deftest parses-form-params
   (testing "parses form params"
     (let [post-handler (fn [{:keys [form-params]}]
-                    (z/html-response (get form-params "value")))
+                         (z/html-response (get form-params "value")))
           app (test-client {:routes ["/" {:get csrf-handler
                                           :post post-handler}]})
           ;; Get the CSRF token
