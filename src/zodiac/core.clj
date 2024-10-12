@@ -22,9 +22,7 @@
             [ring.middleware.cookies :refer [wrap-cookies]]
             [ring.middleware.flash :refer [wrap-flash]]
             [ring.middleware.session :refer [wrap-session]]
-            [ring.middleware.session.cookie :refer [cookie-store]]
-            [ring.middleware.stacktrace :as stacktrace]))
-
+            [ring.middleware.session.cookie :refer [cookie-store]]))
 
 ;; These variables are bound to the current request.
 (def ^:dynamic *request* nil)

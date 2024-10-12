@@ -1,6 +1,5 @@
 (ns user
-  (:require [integrant.core :as ig]
-            [taoensso.telemere.tools-logging :as tt]
+  (:require [taoensso.telemere.tools-logging :as tt]
             [zodiac.core :as z]))
 
 (add-tap println)
@@ -25,5 +24,5 @@
 
 (defn stop []
   (when *system*
-    (ig/halt! *system*)
+    (z/stop *system*)
     (alter-var-root #'*system* (constantly nil))))

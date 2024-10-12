@@ -52,9 +52,22 @@
                :target-dir class-dir})
   (b/jar (jar-opts opts)))
 
+
+(defn ci "Run the CI pipeline of tests (and build the JAR)." [opts]
+  (test opts)
+  (b/delete {:path "target"})
+  (let [opts (jar-opts opts)]
+    (println "\nWriting pom.xml...")
+    (b/write-pom opts)
+    (println "\nCopying source...")
+    (b/copy-dir {:src-dirs ["resources" "src"]
+                 :target-dir class-dir})
+    (println "\nBuilding" (:jar-file opts) "...")
+    (b/jar opts))
+  opts)
+
 (defn deploy "Deploy the JAR to Clojars." [opts]
   (let [{:keys [jar-file] :as opts} (jar-opts opts)]
-    (b/write-pom opts)
     (dd/deploy {:installer :remote
                 :artifact (b/resolve-path jar-file)
                 :pom-file (b/pom-path (select-keys opts [:lib :class-dir]))}))
