@@ -19,11 +19,13 @@
     (alter-var-root #'*system* (constantly nil))))
 
 (defn handler [_request]
-  [:div "Send \"exit\" to shutdown the server."
+  [:div
+   [:h1 "Websocket example"]
+   [:div "Send any message or \"exit\" to shutdown the server."
     [:input#input {:onchange "sendMessage()"}]
     [:button {:onclick "sendMessage()"} "Send"]
-   [:div#result ""]
-   [:script (c/raw """
+    [:div#result ""]
+    [:script (c/raw """
   function sendMessage() {
     var value = document.getElementById('input').value;
     ws.send(value)
@@ -36,7 +38,7 @@
   ws.onmessage = (event) => {
     document.getElementById('result').textContent = event.data
   };
-""")]])
+""")]]])
 
 (defn ws-handler
   "The websocket handler."
