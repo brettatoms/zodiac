@@ -1,0 +1,6 @@
+{:paths ["."]
+ :deps {org.github.brettatoms/zodiac {:local/root "../../"}
+        com.taoensso/telemere {:mvn/version "1.0.0-beta25"}
+        com.taoensso/telemere-slf4j {:mvn/version "1.0.0-beta25"}}
+ ;; Run "clojure -M:main" to start the server
+ :aliases {:main {:main-opts ["-m" "server"]}}}
