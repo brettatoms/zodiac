@@ -31,7 +31,7 @@ What Zodiac includes by default:
  - Expect a certain database
  - Asset bundling
 
-And that's about it.  Zodiac is mostly feature complete.  Additional features like common database setup and asset handling will be done as Zodiac extensions.
+And that's about it.  Zodiac is mostly feature complete although you can expect plenty of bug fixes and polish before a 1.0.x release.  Additional features like common database setup and asset handling will be done as Zodiac extensions.
 
 ### Getting started
 
