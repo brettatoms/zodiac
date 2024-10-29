@@ -1,8 +1,35 @@
 # Zodiac
 
-Zodiac is a small web framework for Clojure that provides a reasonable set of defaults while also being easily extensible.  Zodiac stands on the shoulders of giants rather than being innovative.  What makes Zodiac different than other Clojure web frameworks is that the parts or put together in an elegant way that makes it both quick and easy to get started but endlessly extensible.
+Zodiac is a small web framework for Clojure that provides a reasonable set of defaults while also being easily extensible.  Zodiac stands on the shoulders of giants rather than being innovative.  At its core Zodiac is mostly just a preconfigured Ring app and not more that a few hundred lines of code.
 
-At its core Zodiac is built on [ring](https://github.com/ring-clojure/ring), [reitit](https://github.com/metosin/reitit) and [integrant](https://github.com/weavejester/integrant).
+Zodiac tries to fill a similar niche as the [Flask](https://flask.palletsprojects.com) framework with defaults that make it quick to start a new Clojure based web app without being heavy-handed.
+
+What Zodiac includes by default:
+
+ - Routing and middleware.  We use [Reitit](https://github.com/metosin/reitit)
+ - Request and response handing with [Ring](https://github.com/ring-clojure/ring).
+ - A jetty server (though Jetty can be turned off)
+ - Automatic Hiccup-based HTML rendering using [Chassis](https://github.com/onionpancakes/chassis).
+ - Websocket support
+ - File streaming
+ - Flash messages
+ - Cookies and secure session handler
+ - Form and JSON parsing request parsing
+ - Extensible. Pass a list of functions to extend Zodiac.  Override the error handlers.
+ - Convenience
+   - Helpers to lookup routes
+   - Helpers to return hiccup and JSON responses
+   - A request context
+   - Variables dynamically bound to the current request, router and session
+
+ What Zodiac doesn't do:
+ - Dictate a file structure with generators or scaffolding.
+ - No configuration over code
+ - No path based routing, etc.
+ - Expect a certain database
+ - Asset bundling
+
+And that's about it.  Zodiac is mostly feature complete.  Additional features like common database setup and asset handling will be done as Zodiac extensions.
 
 ### Getting started
 
@@ -43,7 +70,7 @@ Return a vector from the response handler to  automatically convert the vector t
 
 (defn routes []
   ;; Returns a text/html response with <div>hi</div> for the body.
-  ["/" {:handler (fn [_] [:div "hi"] )}])
+  ["/" {:handler (fn [_] [:div "hi"])}])
 
 (z/start {:routes #'routes})
 ```
@@ -84,11 +111,3 @@ Zodiac can be extended using a sequence of functions that take an integrant syst
 (z/start {:routes #'routes
           :extensions [service-ext]})
 ```
-
-
-### Acknowledgements
-
-Zodiac wouldn't be possible if not for the following people:
-
-- James Reeves ([weavejester](https://github.com/weavejester)): Ring, integrant, cljfmt, etc
-- [Metosin](https://github.com/metosin): [reitit](https://github.com/metosin/reitit), [malli](https://github.com/metosin/mallireitit), etc
