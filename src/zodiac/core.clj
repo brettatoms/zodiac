@@ -94,38 +94,24 @@
                         (bytes? secret) secret
                         (string? secret) (.getBytes secret))}))
 
-;; type hierarchy
-(derive ::error ::exception)
-(derive ::failure ::exception)
-(derive ::horror ::exception)
+(defn- create-exception-middleware
+  ([]
+   (create-exception-middleware {}))
+  ([custom-handlers]
+   (exception/create-exception-middleware
+    (merge exception/default-handlers
+           {Exception (fn [exception _request]
+                        (log/error exception)
+                        {:status 500
+                         :body "Unknown error"})
 
-(defn- exception-handler [message exception _request]
-  (log/error (str message "\n" exception))
-  (log/error exception)
-  {:status 500
-   :body "Unknown error"})
+            ;; print stack-traces for all exceptions
+            ::exception/wrap (fn [handler e request]
+                               (println "ERROR" (pr-str (:uri request)))
+                               (handler e request))}
+           custom-handlers))))
 
-(def ^:private exception-middleware
-  (exception/create-exception-middleware
-   (merge exception/default-handlers
-          {;; ex-data with :type ::error
-           ::error (partial exception-handler "error")
-
-           ;; ex-data with ::exception or ::failure
-           ::exception (partial exception-handler "exception")
-
-           ;; SQLException and all it's child classes
-           java.sql.SQLException (partial exception-handler "sql-exception")
-
-           ;; override the default handler
-           ::exception/default (partial exception-handler "default")
-
-           ;; print stack-traces for all exceptions
-           ::exception/wrap (fn [handler e request]
-                              (println "ERROR" (pr-str (:uri request)))
-                              (handler e request))})))
-
-(defmethod ig/init-key ::middleware [_ {:keys [context session-store cookie-attrs]}]
+(defmethod ig/init-key ::middleware [_ {:keys [context cookie-attrs error-handlers session-store]}]
   [;; Read and write cookies
    wrap-cookies
    ;; Read and write the session cookie
@@ -159,7 +145,7 @@
    ;; Vectors that are returned by handlers will be rendered to html
    render-html-middleware
    ;; Handle exceptions
-   exception-middleware])
+   (create-exception-middleware error-handlers)])
 
 (defmethod ig/init-key ::app [_ {:keys [routes middleware reload-per-request? print-request-diffs?]}]
   (when (and reload-per-request?
@@ -222,7 +208,8 @@
     [:reload-per-request?  :boolean]
     [:print-request-diffs? :boolean]
     ;; Start the default jetty. Defaults to true.
-    [:start-server? :boolean]]))
+    [:start-server? :boolean]
+    [:error-handlers :any]]))
 
 (defn options-from-env
   "Return an options map from environment variables.
@@ -247,7 +234,8 @@
                            ::middleware {:context (:request-context options {})
                                          :cookie-attrs (:cookie-attrs options {:http-only true
                                                                                :same-site :lax})
-                                         :session-store (ig/ref ::cookie-store)}
+                                         :session-store (ig/ref ::cookie-store)
+                                         :error-handlers (:error-handlers options {})}
                            ::app {:routes (:routes options [])
                                   :middleware (ig/ref ::middleware)
                                   :reload-per-request? (:reload-per-request? options false)

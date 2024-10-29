@@ -174,10 +174,36 @@
 
 (deftest exception-handling
   (testing "handles exceptions"
-    (let [handler (fn [_] (throw (ex-info "somethnig" {})))
+    (let [handler (fn [_] (throw (ex-info "something" {})))
           app (test-client {:routes ["/" {:get handler}]})
           resp (app {:request-method :get
                      :uri "/"})]
       (is (match? {:status 500
                    :body "Unknown error"}
+                  resp))))
+
+  (testing "custom error handler"
+    (let [handler (fn [_] (throw (ex-info "something" {})))
+          exc-handler (fn [_exception _request]
+                        {:status 500
+                         :body "this is the custom handler"})
+          app (test-client {:routes ["/" {:get handler}]
+                            :error-handlers {Exception exc-handler}})
+          resp (app {:request-method :get
+                     :uri "/"})]
+      (is (match? {:status 500
+                   :body "this is the custom handler"}
+                  resp))))
+
+  (testing "custom error handler - ex-info type"
+    (let [handler (fn [_] (throw (ex-info "something" {:type ::exception})))
+          exc-handler (fn [_exception _request]
+                        {:status 500
+                         :body "this is the custom handler"})
+          app (test-client {:routes ["/" {:get handler}]
+                            :error-handlers {::exception exc-handler}})
+          resp (app {:request-method :get
+                     :uri "/"})]
+      (is (match? {:status 500
+                   :body "this is the custom handler"}
                   resp)))))
