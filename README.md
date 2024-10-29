@@ -79,7 +79,7 @@ Return a vector from the response handler to  automatically convert the vector t
 
 ### Render JSON
 
-Return a vector from the response handler to  automatically convert the vector to an html response.
+Use the `zodiac.core/json-response` function to encode Clojure maps to JSON and return `application/json` HTTP responses.
 
 ``` clojure
 (ns myapp
