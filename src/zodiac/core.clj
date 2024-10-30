@@ -55,9 +55,11 @@
             :else (json/write-str data))}))
 
 (defn url-for
-  "Return a url string give a route name and option arg and query params. This
-  functions uses the router for the current request bound to *request*. If you
-  need to use a different router then temporary bind *router* to your  the route name  this url-for "
+  "Return a url string given a route name and optional arg and query params. This
+  functions uses the router for the current request bound to *request*.
+
+  If you need to use a different router then temporary bind *router* before
+  calling this function."
   ([name-or-path]
    (url-for name-or-path nil nil))
   ([name-or-path args]
@@ -210,19 +212,6 @@
     ;; Start the default jetty. Defaults to true.
     [:start-server? :boolean]
     [:error-handlers :any]]))
-
-(defn options-from-env
-  "Return an options map from environment variables.
-
-  The following options can be set from environment variables:
-  :print-request-diffs? - ZODIAC_PRINT_REQUEST_DIFFS
-  :reload-per-request? - ZODIAC_RELOAD_PER_REQUEST
-  "
-  []
-  {:cookie-secret (System/getenv "ZODIAC_COOKIE_SECRET")
-   :port (System/getenv "ZODIAC_PORT")
-   :reload-per-request? (System/getenv "ZODIAC_RELOAD_PER_REQUEST")
-   :print-request-diffs? (System/getenv "ZODIAC_PRINT_REQUEST_DIFFS")})
 
 (defn start
   ([]
