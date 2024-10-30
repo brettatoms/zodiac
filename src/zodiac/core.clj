@@ -25,9 +25,18 @@
             [ring.middleware.session.cookie :refer [cookie-store]]))
 
 ;; These variables are bound to the current request.
-(def ^:dynamic *request* nil)
-(def ^:dynamic *router* nil)
-(def ^:dynamic *session* nil)
+
+(def ^:dynamic *request*
+  "Bound to the current request."
+  nil)
+
+(def ^:dynamic *router*
+  "The router used by the current request.  This is the same as `(:reitit.core/router *request*)`"
+  nil)
+
+(def ^:dynamic *session*
+  "The session in the current request.  This is the same as `(:session *request*)`"
+  nil)
 
 (defn html-response
   "Return an HTML ring response. Attempt to render the body as HTML unless its
@@ -188,7 +197,7 @@
   (when server
     (jetty/stop-server server)))
 
-(def Options
+(def ^:private Options
   (mu/optional-keys
    [:map
     [:routes [:or
@@ -214,6 +223,7 @@
     [:error-handlers :any]]))
 
 (defn start
+  "Start the zodiac server.  Returns an integrant system map."
   ([]
    (start {}))
   ([options]
@@ -243,5 +253,7 @@
        (ig/load-namespaces config)
        (ig/init config)))))
 
-(defn stop [system]
+(defn stop
+  "Stop the zodiac server.  Accepts the system map returned"
+  [system]
   (ig/halt! system))
