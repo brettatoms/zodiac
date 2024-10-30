@@ -1,6 +1,8 @@
 # Change Log
 
-* 0.2.xx -- unrelease
+* 0.2.31 -- 2024-10-30
+  * Use Java 17 for build version
+  * Improve docs
   * Make render-html-middleware private
   * bump info.sunng/ring-jetty9-adapter 0.35.0 -> 0.35.1
   * bump integrant/integrant 0.12.0 -> 0.13.1
