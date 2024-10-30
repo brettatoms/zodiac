@@ -1,6 +1,7 @@
 # Change Log
 
 * 0.2.xx -- unrelease
+  * Make render-html-middleware private
   * bump info.sunng/ring-jetty9-adapter 0.35.0 -> 0.35.1
   * bump integrant/integrant 0.12.0 -> 0.13.1
   * bump metosin/malli 0.16.3 -> 0.16.4

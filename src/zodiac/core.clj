@@ -77,7 +77,7 @@
         (assoc ::context context)
         (handler))))
 
-(defn render-html-middleware [handler]
+(defn- render-html-middleware [handler]
   (fn [request]
     (let [response (handler request)]
       (if (vector? response)
