@@ -1,5 +1,8 @@
 # Change Log
 
+* 0.3.33 -- 2024-10-31
+  * Fix build release version
+
 * 0.3.32 -- 2024-10-31
   * Make the router a separate component so it can be extended or replaced
 
