@@ -1,5 +1,8 @@
 # Change Log
 
+* 0.3.32 -- 2024-10-31
+  * Make the router a separate component so it can be extended or replaced
+
 * 0.2.31 -- 2024-10-30
   * Use Java 17 for build version
   * Improve docs

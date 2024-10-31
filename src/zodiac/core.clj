@@ -158,12 +158,20 @@
    ;; Handle exceptions
    (create-exception-middleware error-handlers)])
 
-(defmethod ig/init-key ::app [_ {:keys [routes middleware reload-per-request? print-request-diffs?]}]
+(defmethod ig/init-key ::app [_ {:keys [router reload-per-request?]}]
+  (let [create-handler (fn []
+                         (reitit.ring/ring-handler
+                          router
+                          (reitit.ring/create-default-handler)))]
+    (if reload-per-request?
+      (reitit.ring/reloading-ring-handler create-handler)
+      (create-handler))))
+
+(defmethod ig/init-key ::router [_ {:keys [routes middleware print-request-diffs? reload-per-request?]}]
   (when (and reload-per-request?
              (or (not (var? routes))
                  (not (fn? (var-get routes)))))
     (println "WARNING: For :reload-per-request? to work you need to pass a function var for routes."))
-
   (let [router-options (cond-> {;; Use for pretty exceptions for route
                                 ;; definition errors and not exceptions during
                                 ;; requests
@@ -174,21 +182,14 @@
                          ;; middleware. Should only be run in dev mode.
                          print-request-diffs?
                          (assoc :reitit.middleware/transform dev/print-request-diffs))
-        ;; Always make routes a function
         routes (cond
                  (var? routes)
                  (if (fn? (var-get routes))
                    routes
                    (constantly (var-get routes)))
                  (fn? routes) routes
-                 :else (constantly routes))
-        create-handler (fn []
-                         (reitit.ring/ring-handler
-                          (reitit.ring/router (routes) router-options)
-                          (reitit.ring/create-default-handler)))]
-    (if reload-per-request?
-      (reitit.ring/reloading-ring-handler create-handler)
-      (create-handler))))
+                 :else (constantly routes))]
+    (reitit.ring/router (routes) router-options)))
 
 (defmethod ig/init-key ::jetty [_ {:keys [handler options]}]
   (jetty/run-jetty handler options))
@@ -235,10 +236,12 @@
                                                                                :same-site :lax})
                                          :session-store (ig/ref ::cookie-store)
                                          :error-handlers (:error-handlers options {})}
-                           ::app {:routes (:routes options [])
-                                  :middleware (ig/ref ::middleware)
-                                  :reload-per-request? (:reload-per-request? options false)
-                                  :print-request-diffs? (:print-request-diffs? options false)}
+                           ::router {:routes (:routes options [])
+                                     :middleware (ig/ref ::middleware)
+                                     :reload-per-request? (:reload-per-request? options false)
+                                     :print-request-diffs? (:print-request-diffs? options false)}
+                           ::app {:router (ig/ref ::router)
+                                  :reload-per-request? (:reload-per-request? options false)}
                            ::jetty {:handler (ig/ref ::app)
                                     :options (merge {:port (or (:port options) 3000)
                                                      :join? false}
