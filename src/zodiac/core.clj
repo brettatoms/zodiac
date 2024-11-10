@@ -158,11 +158,14 @@
    ;; Handle exceptions
    (create-exception-middleware error-handlers)])
 
-(defmethod ig/init-key ::app [_ {:keys [router reload-per-request?]}]
+(defmethod ig/init-key ::default-handler [_ _]
+  (reitit.ring/create-default-handler))
+
+(defmethod ig/init-key ::app [_ {:keys [router default-handlers reload-per-request?]}]
   (let [create-handler (fn []
                          (reitit.ring/ring-handler
                           router
-                          (reitit.ring/create-default-handler)))]
+                          (apply reitit.ring/routes default-handlers)))]
     (if reload-per-request?
       (reitit.ring/reloading-ring-handler create-handler)
       (create-handler))))
@@ -183,10 +186,9 @@
                          print-request-diffs?
                          (assoc :reitit.middleware/transform dev/print-request-diffs))
         routes (cond
-                 (var? routes)
-                 (if (fn? (var-get routes))
-                   routes
-                   (constantly (var-get routes)))
+                 (var? routes) (if (fn? (var-get routes))
+                                 routes
+                                 (constantly (var-get routes)))
                  (fn? routes) routes
                  :else (constantly routes))]
     (reitit.ring/router (routes) router-options)))
@@ -195,6 +197,7 @@
   (jetty/run-jetty handler options))
 
 (defmethod ig/halt-key! ::jetty [_ server]
+  (log/debug "Stopping zodiac.core.jetty...\n")
   (when server
     (jetty/stop-server server)))
 
@@ -240,7 +243,9 @@
                                      :middleware (ig/ref ::middleware)
                                      :reload-per-request? (:reload-per-request? options false)
                                      :print-request-diffs? (:print-request-diffs? options false)}
+                           ::default-handler {}
                            ::app {:router (ig/ref ::router)
+                                  :default-handlers [(ig/ref ::default-handler)]
                                   :reload-per-request? (:reload-per-request? options false)}
                            ::jetty {:handler (ig/ref ::app)
                                     :options (merge {:port (or (:port options) 3000)
