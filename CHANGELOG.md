@@ -1,5 +1,8 @@
 # Change Log
 
+* 0.3.34 -- 2024-11-10
+  * Allow extending the router via default handlers
+
 * 0.3.33 -- 2024-10-31
   * Fix build release version
 
