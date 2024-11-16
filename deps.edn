@@ -35,9 +35,6 @@
                           slipset/deps-deploy {:mvn/version "0.2.2"}}
                    :ns-default build}
 
-           ;; clojure -M:dev:test:test-runner
-           :test-runner {:main-opts ["-m" "kaocha.runner"]}
-
            ;; clojure -M:clj-kondo
            :clj-kondo {:replace-deps {clj-kondo/clj-kondo {:mvn/version "2024.09.27"}}
                        :main-opts ["-m" "clj-kondo.main"]}
