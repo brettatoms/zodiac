@@ -2,6 +2,8 @@
 
 [![Clojars Project](https://img.shields.io/clojars/v/com.github.brettatoms/zodiac.svg)](https://clojars.org/com.github.brettatoms/zodiac)
 
+Come chat in [#zodiac](https://clojurians.slack.com/archives/C07V6RVUN7J)
+
 Zodiac is a small web framework for Clojure that provides a reasonable set of defaults while also being easily extensible.  Zodiac stands on the shoulders of giants rather than being innovative.  At its core Zodiac is mostly just a preconfigured Ring app and not more that a few hundred lines of code.
 
 Zodiac tries to fill a similar niche as the [Flask](https://flask.palletsprojects.com) framework with defaults that make it quick to start a new Clojure based web app without being heavy-handed.
@@ -113,3 +115,12 @@ Zodiac can be extended using a sequence of functions that take an integrant syst
 (z/start {:routes #'routes
           :extensions [service-ext]})
 ```
+
+### Extensions
+
+- [Zodiac Assets](https://github.com/brettatoms/zodiac-assets): Static asset
+  building and url lookup with [Vite](https://vite.dev/).
+
+- [Zodiac SQL](https://github.com/brettatoms/zodiac-sql): Helper for connecting
+  to SQL database and running
+  [HoneySQL](https://github.com/seancorfield/honeysql) queries.
