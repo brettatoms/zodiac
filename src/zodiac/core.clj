@@ -149,10 +149,10 @@
    coercion/coerce-response-middleware
    ;; coercing request parameters
    coercion/coerce-request-middleware
-   ;; Bind the request globals
-   bind-globals-middleware
    ;; Populate the request context
    [context-middleware context]
+   ;; Bind the request globals
+   bind-globals-middleware
    ;; Vectors that are returned by handlers will be rendered to html
    render-html-middleware
    ;; Handle exceptions

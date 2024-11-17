@@ -1,5 +1,8 @@
 # Change Log
 
+* 0.3.38 -- 2024-11-17
+  * Change middleware order so context is available in *request*
+
 * 0.3.34 -- 2024-11-10
   * Allow extending the router via default handlers
 
