@@ -1,15 +1,14 @@
 (ns server
-   (:require [ring.websocket :as ws]
-           [taoensso.telemere.tools-logging :as tt]
-           [dev.onionpancakes.chassis.core :as c]
-           [zodiac.core :as z])
+  (:require [dev.onionpancakes.chassis.core :as c]
+            [integrant.core :as ig]
+            [ring.websocket :as ws]
+            [taoensso.telemere.tools-logging :as tt]
+            [zodiac.core :as z])
  (:gen-class))
 
 (tt/tools-logging->telemere!) ;; send tools.logging to telemere
 
-(declare stop)
-
-(def ^:dynamic *system*)
+(def ^:dynamic *system* nil)
 
 (defn shutdown [socket]
   (ws/send socket "Shutting down :(")
@@ -62,3 +61,14 @@
     ;; Assign the system to a dynamic var so we can stop it later
     (alter-var-root #'*system* (constantly sys))
     (println "Ready to go...")))
+
+(comment
+  (-main)
+
+  (ig/halt! *system*)
+
+  (do
+    (when *system*
+      (ig/halt! *system*))
+    (-main))
+  ())
