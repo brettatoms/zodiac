@@ -5,7 +5,7 @@
 
 (def lib 'com.github.brettatoms/zodiac)
 
-(defn- version-base [patch] (format "0.3.%s" patch))
+(defn- version-base [patch] (format "0.4.%s" patch))
 (def version (version-base (b/git-count-revs nil)))
 (def snapshot (version-base "9999-SNAPSHOT"))
 (def class-dir "target/classes")
