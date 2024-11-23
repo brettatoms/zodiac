@@ -149,6 +149,8 @@
    coercion/coerce-response-middleware
    ;; coercing request parameters
    coercion/coerce-request-middleware
+   ;; coerce exceptions
+   coercion/coerce-exceptions-middleware
    ;; Populate the request context
    [context-middleware context]
    ;; Bind the request globals
@@ -180,7 +182,8 @@
                                 ;; requests
                                 :exception pretty/exception
                                 :data {:muuntaja muuntaja/instance
-                                       :middleware middleware}}
+                                       :middleware middleware
+                                       :coercion reitit.coercion.malli/coercion}}
                          ;; Print out a diff of the request between each
                          ;; middleware. Should only be run in dev mode.
                          print-request-diffs?
@@ -196,8 +199,9 @@
 (defmethod ig/init-key ::jetty [_ {:keys [handler options]}]
   (jetty/run-jetty handler options))
 
+;; TODO: jetty doesn't seem to be stopping
 (defmethod ig/halt-key! ::jetty [_ server]
-  (log/debug "Stopping zodiac.core.jetty...\n")
+  (log/debug "Stopping jetty...\n")
   (when server
     (jetty/stop-server server)))
 

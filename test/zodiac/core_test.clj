@@ -1,5 +1,6 @@
 (ns zodiac.core-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.data.json :as json]
+            [clojure.test :refer :all]
             [integrant.core :as ig]
             [matcher-combinators.test :refer [match?]]
             [peridot.core :as peri]
@@ -207,3 +208,29 @@
       (is (match? {:status 500
                    :body "this is the custom handler"}
                   resp)))))
+
+(deftest coercion
+  (testing "coercion error"
+    (let [handler (spy/spy (fn [_] {:status 200}))
+          app (test-client {:routes ["/:x" {:name :root
+                                            :handler handler
+                                            :parameters {:path {:x int?}}}]})
+          resp (app {:request-method :get
+                     :uri "/1"})]
+      (is (match? {:status 200} resp))))
+
+  (testing "coercion error"
+          (let [handler (spy/spy (fn [_] {:status 200}))
+                app (test-client {:routes ["/:x" {:name :root
+                                                  :handler handler
+                                                  :parameters {:path {:x int?}}}]})
+                resp (-> (app {:request-method :get
+                               :uri "/abc"})
+                         (update :body (comp json/read-str slurp)))]
+            (is (match? {:status 400
+                         :body {"value" {"x" "abc"}
+                                "type" "reitit.coercion/request-coercion"
+                                "coercion" "malli"
+                                "in" ["request" "path-params"]
+                                "humanized" {"x" ["should be an int"]}}}
+                        resp)))))
