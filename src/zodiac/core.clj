@@ -218,6 +218,7 @@
     [:cookie-secret [:or
                      [:string {:min 16 :max 16}]
                      [bytes? {:min 16 :max 16}]]]
+    [:cookie-attrs [:map-of :keyword :any]]
     [:jetty [:map-of :keyword :any]]
     ;; The port to connect. If the port is also specified in the :jetty key then
     ;; this :port key will be ignored.

@@ -61,4 +61,4 @@ passed to `zodiac.core/start`.
           :error-handlers {::coercion/request-coercion coercion-error-handler}})
 ```
 
-I encourage you to read more about defining schemas for different request parameters in the Reitit documentation for [definiting parameters]( https://cljdoc.org/d/metosin/reitit/0.7.2/doc/coercion/coercion-explained#defining-parameters)
+I encourage you to read more about defining schemas for different request parameters in the Reitit documentation for [defining parameters]( https://cljdoc.org/d/metosin/reitit/0.7.2/doc/coercion/coercion-explained#defining-parameters)

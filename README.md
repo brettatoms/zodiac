@@ -18,7 +18,7 @@ What Zodiac includes by default:
  - File streaming
  - Flash messages
  - Cookies and secure session handler
- - Form and JSON parsing request parsing
+ - Form and JSON request parsing
  - Extensible. Pass a list of functions to extend Zodiac.  Override the error handlers.
  - Convenience
    - Helpers to lookup routes
@@ -57,6 +57,7 @@ The `zodiac.core/start` function takes a single options map with the following k
 - `:extensions`: A sequence of functions that accept an integrant system configuration map and return a modified integrant system configuration app.
 - `:request-context`: A map of values values to add to the `::z/context` map in the request map.
 - `:cookie-secret`: The secret used to encrypt the cookie
+- `:cookie-attrs`: Override the coode settings.  Defaults to `{:http-only true :same-site :lax}`.
 - `:jetty`: A map of options to pass to the embedded [ring-jetty9-adapter](https://github.com/sunng87/ring-jetty9-adapter)
 - `:port`: The port to listen for connections.  If the port is also specificed in the `:jetty` map then this value will be ignored.  The default is `3000`.
 - `:error-handlers`: A map of types to error handler functions
