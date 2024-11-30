@@ -1,7 +1,8 @@
 # Change Log
 
-* 0.4.xx -- Unreleased
+* 0.4.44 -- Unreleased
   * Enable malli coercion by default
+  * Fix custom error handlers
 
 * 0.3.38 -- 2024-11-17
   * Change middleware order so context is available in *request*
