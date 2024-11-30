@@ -1,6 +1,6 @@
 # Change Log
 
-* 0.4.44 -- Unreleased
+* 0.4.45 -- 2024-11-30
   * Enable malli coercion by default
   * Fix custom error handlers
 
