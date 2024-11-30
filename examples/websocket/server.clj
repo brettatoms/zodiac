@@ -7,8 +7,9 @@
  (:gen-class))
 
 (tt/tools-logging->telemere!) ;; send tools.logging to telemere
+(add-tap println)
 
-(def ^:dynamic *system* nil)
+(defonce ^:dynamic *system* nil)
 
 (defn shutdown [socket]
   (ws/send socket "Shutting down :(")

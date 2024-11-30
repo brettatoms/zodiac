@@ -137,8 +137,8 @@
    muuntaja.middle/format-negotiate-middleware
    ;; Encoding response body
    muuntaja.middle/format-response-middleware
-   ;; exception handling
-   exception/exception-middleware
+   ;; Handle exceptions
+   (create-exception-middleware error-handlers)
    ;; Flash messages in the session
    wrap-flash
    ;; Check CSRF tokens
@@ -156,9 +156,7 @@
    ;; Bind the request globals
    bind-globals-middleware
    ;; Vectors that are returned by handlers will be rendered to html
-   render-html-middleware
-   ;; Handle exceptions
-   (create-exception-middleware error-handlers)])
+   render-html-middleware])
 
 (defmethod ig/init-key ::default-handler [_ _]
   (reitit.ring/create-default-handler))
