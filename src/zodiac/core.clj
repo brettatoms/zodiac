@@ -162,14 +162,20 @@
   (reitit.ring/create-default-handler))
 
 (defmethod ig/init-key ::app [_ {:keys [router default-handlers reload-per-request?]}]
-  (let [create-handler (fn []
+  (let [router-factory (if (fn? router)
+                         router
+                         (constantly router))
+        create-handler (fn []
                          (reitit.ring/ring-handler
-                          router
+                          (router-factory)
                           (apply reitit.ring/routes default-handlers)))]
     (if reload-per-request?
       (reitit.ring/reloading-ring-handler create-handler)
       (create-handler))))
 
+;; The ::router component returns a router factory so that the if
+;; reload-per-request? is true then the full route definition gets rebuilt on
+;; every request
 (defmethod ig/init-key ::router [_ {:keys [routes middleware print-request-diffs? reload-per-request?]}]
   (when (and reload-per-request?
              (or (not (var? routes))
@@ -192,7 +198,8 @@
                                  (constantly (var-get routes)))
                  (fn? routes) routes
                  :else (constantly routes))]
-    (reitit.ring/router (routes) router-options)))
+    (fn []
+      (reitit.ring/router (routes) router-options))))
 
 (defmethod ig/init-key ::jetty [_ {:keys [handler options]}]
   (jetty/run-jetty handler options))
