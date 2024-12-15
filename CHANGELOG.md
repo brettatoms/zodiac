@@ -1,5 +1,8 @@
 # Change Log
 
+* 0.4.48 -- 2024-12-15
+  * Fix reload-per-request? config option
+
 * 0.4.45 -- 2024-11-30
   * Enable malli coercion by default
   * Fix custom error handlers
