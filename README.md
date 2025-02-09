@@ -30,7 +30,7 @@ What Zodiac includes by default:
  - Dictate a file structure with generators or scaffolding.
  - No configuration over code
  - No path based routing, etc.
- - Expect a certain database
+ - Expect a certain database - (see [Zodiac SQL](https://github.com/brettatoms/zodiac-sql))
  - Asset bundling (see [Zodiac Assets](https://github.com/brettatoms/zodiac-assets))
 
 And that's about it.  Zodiac is mostly feature complete although you can expect plenty of bug fixes and polish before a 1.0.x release.  Additional features like common database setup and asset handling will be done as Zodiac extensions.
@@ -57,11 +57,11 @@ The `zodiac.core/start` function takes a single options map with the following k
 - `:extensions`: A sequence of functions that accept an integrant system configuration map and return a modified integrant system configuration app.
 - `:request-context`: A map of values values to add to the `::z/context` map in the request map.
 - `:cookie-secret`: The secret used to encrypt the cookie
-- `:cookie-attrs`: Override the coode settings.  Defaults to `{:http-only true :same-site :lax}`.
+- `:cookie-attrs`: Override the code settings.  Defaults to `{:http-only true :same-site :lax}`.
 - `:jetty`: A map of options to pass to the embedded [ring-jetty9-adapter](https://github.com/sunng87/ring-jetty9-adapter)
-- `:port`: The port to listen for connections.  If the port is also specificed in the `:jetty` map then this value will be ignored.  The default is `3000`.
+- `:port`: The port to listen for connections.  If the port is also specified in the `:jetty` map then this value will be ignored.  The default is `3000`.
 - `:error-handlers`: A map of types to error handler functions
-- `:anti-forgery-whitelist`: A sequence or strings or regular expressions to match routes that don't require anti-forgery tokens.
+- `:anti-forgery-whitelist`: A sequence or strings or regular expressions to bypass anti-forgery/csrf checking for matching routes.
 - `:reload-per-request?`: Reload the routes on every request. For this to work you will need to pass the var of the routes function, e.g. `#'routes`.
 - `:print-request-diffs?`: Print a diff of each request between each middleware.
 - `:start-server?`: Set to `false` to disable the embedded jetty server.
