@@ -31,12 +31,12 @@
                                tortue/spy {:mvn/version "2.15.0"}}
                   :main-opts ["-m" "kaocha.runner"]}
 
-           :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}
+           :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.7"}
                           slipset/deps-deploy {:mvn/version "0.2.2"}}
                    :ns-default build}
 
            ;; clojure -M:clj-kondo
-           :clj-kondo {:replace-deps {clj-kondo/clj-kondo {:mvn/version "2024.09.27"}}
+           :clj-kondo {:replace-deps {clj-kondo/clj-kondo {:mvn/version "2025.01.16"}}
                        :main-opts ["-m" "clj-kondo.main"]}
 
            ;; clojure -M:cljfmt check|fix
