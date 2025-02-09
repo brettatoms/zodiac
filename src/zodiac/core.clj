@@ -1,6 +1,8 @@
 (ns zodiac.core
   (:require [clojure.data.json :as json]
             [clojure.tools.logging :as log]
+            [ring.middleware.anti-forgery.session :as anti-forgery.session]
+            [ring.middleware.anti-forgery.strategy :as anti-forgery.strategy]
             [dev.onionpancakes.chassis.core :as chassis]
             [integrant.core :as ig]
             [malli.core :as m]
@@ -122,7 +124,35 @@
                                (handler e request))}
            custom-handlers))))
 
-(defmethod ig/init-key ::middleware [_ {:keys [context cookie-attrs error-handlers session-store]}]
+(defmethod ig/init-key ::anti-forgery-config [_ {:keys [whitelist]}]
+  (let [session-strategy (anti-forgery.session/session-strategy)]
+    ;; An anti-forgery strategy that wraps the session strategy but also allows
+    ;; providing a whitelist of paths.
+    (letfn [(uri-matches? [uri pattern]
+              (re-matches (re-pattern pattern) uri))]
+      {:read-token (fn [request]
+                     ;; Duplicates ring.middleware.anti-forgery/default-request-token but
+                     ;; also considers a uri that matches the whitelist a valid request
+                     (let [form-params (merge (:form-params request)
+                                              (:multipart-params request))
+                           uri (:uri request)]
+                       (or (some? (some #(uri-matches? uri %) whitelist))
+                           (-> request form-params (get "__anti-forgery-token"))
+                           (-> request :headers (get "x-csrf-token"))
+                           (-> request :headers (get "x-xsrf-token")))))
+       :strategy (reify anti-forgery.strategy/Strategy
+                   (valid-token? [_ request token]
+                     (let [uri (:uri request)]
+                       ;; If the uri matches on of the whitelist patterns then return true
+                       ;; else return (valid-token?) from the session-strategy
+                       (or (some? (some #(uri-matches? uri %) whitelist))
+                           (.valid-token? session-strategy request token))))
+                   (get-token [_ request]
+                     (.get-token session-strategy request))
+                   (write-token [_ request response token]
+                     (.write-token session-strategy request response token)))})))
+
+(defmethod ig/init-key ::middleware [_ {:keys [context cookie-attrs error-handlers session-store anti-forgery-config]}]
   [;; Read and write cookies
    wrap-cookies
    ;; Read and write the session cookie
@@ -142,7 +172,7 @@
    ;; Flash messages in the session
    wrap-flash
    ;; Check CSRF tokens
-   wrap-anti-forgery
+   [wrap-anti-forgery anti-forgery-config]
    ;; decoding request body
    muuntaja.middle/format-request-middleware
    ;; coercing response bodys
@@ -234,8 +264,10 @@
     [:print-request-diffs? :boolean]
     ;; Start the default jetty. Defaults to true.
     [:start-server? :boolean]
-    [:error-handlers :any]]))
-
+    [:error-handlers :any]
+    [:anti-forgery-whitelist [:sequential [:or
+                                           :string
+                                           [:fn #(instance? java.util.regex.Pattern %)]]]]]))
 (defn start
   "Start the zodiac server.  Returns an integrant system map."
   ([]
@@ -244,11 +276,13 @@
    (if-not (m/validate Options options)
      (println "WARNING: Invalid options: " (me/humanize (m/explain Options options)))
      (let [config (cond-> {::cookie-store {:secret (:cookie-secret options)}
+                           ::anti-forgery-config {:whitelist (:anti-forgery-whitelist options [])}
                            ::middleware {:context (:request-context options {})
                                          :cookie-attrs (:cookie-attrs options {:http-only true
                                                                                :same-site :lax})
                                          :session-store (ig/ref ::cookie-store)
-                                         :error-handlers (:error-handlers options {})}
+                                         :error-handlers (:error-handlers options {})
+                                         :anti-forgery-config (ig/ref ::anti-forgery-config)}
                            ::router {:routes (:routes options [])
                                      :middleware (ig/ref ::middleware)
                                      :reload-per-request? (:reload-per-request? options false)

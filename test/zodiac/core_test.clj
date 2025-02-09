@@ -234,3 +234,52 @@
                           "in" ["request" "path-params"]
                           "humanized" {"x" ["should be an int"]}}}
                   resp)))))
+(deftest anti-forgery
+  (let [post-handler (fn [{:keys [] :as _request}]
+                       [:div "hi"])
+        app (test-client {:routes [""
+                                   ["/" {:get csrf-handler
+                                         :post post-handler}]
+                                   ["/whitelisted" {:get csrf-handler
+                                                    :post post-handler}]]
+                          :anti-forgery-whitelist ["/whitelisted"]})]
+    (testing "anti-forgery token required"
+      (let [sess (-> (peri/session app) ;; Get the CSRF token
+                     (peri/request "/"))
+            token (-> sess :response :body)
+            resp (-> sess
+                     ;; POST with token
+                     (peri/request "/"
+                                   :request-method :post
+                                   :headers {"X-CSRF-Token" token}
+                                   :content-type "text/html"
+                                   :body "anything")
+                     :response)]
+        (is (match? {:status 200
+                     :headers {"content-type" "text/html"}
+                     :body "<!DOCTYPE html><div>hi</div>"}
+                    resp))))
+
+    (testing "anti-forgery missing - 403"
+      (let [resp (-> (peri/session app)
+                     ;; POST without token
+                     (peri/request "/"
+                                   :request-method :post
+                                   :content-type "text/html"
+                                   :body "anything")
+                     :response)]
+        (is (match? {:status 403
+                     :body "<h1>Invalid anti-forgery token</h1>"}
+                    resp))))
+
+    (testing "anti-forgery - whitelist"
+      (let [resp (-> (peri/session app)
+                     ;; POST without token to whitelist uri
+                     (peri/request "/whitelisted"
+                                   :request-method :post
+                                   :content-type "text/html"
+                                   :body "anything")
+                     :response)]
+        (is (match? {:status 200
+                     :headers {"content-type" "text/html"}
+                     :body "<!DOCTYPE html><div>hi</div>"} resp))))))

@@ -1,5 +1,8 @@
 # Change Log
 
+* Unreleased -- 2025-02-09
+  * Add anti-forgery-whitelist config option
+
 * 0.4.48 -- 2024-12-15
   * Fix reload-per-request? config option
 

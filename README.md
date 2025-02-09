@@ -61,6 +61,7 @@ The `zodiac.core/start` function takes a single options map with the following k
 - `:jetty`: A map of options to pass to the embedded [ring-jetty9-adapter](https://github.com/sunng87/ring-jetty9-adapter)
 - `:port`: The port to listen for connections.  If the port is also specificed in the `:jetty` map then this value will be ignored.  The default is `3000`.
 - `:error-handlers`: A map of types to error handler functions
+- `:anti-forgery-whitelist`: A sequence or strings or regular expressions to match routes that don't require anti-forgery tokens.
 - `:reload-per-request?`: Reload the routes on every request. For this to work you will need to pass the var of the routes function, e.g. `#'routes`.
 - `:print-request-diffs?`: Print a diff of each request between each middleware.
 - `:start-server?`: Set to `false` to disable the embedded jetty server.
