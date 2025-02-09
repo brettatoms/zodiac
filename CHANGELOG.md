@@ -2,6 +2,8 @@
 
 * Unreleased -- 2025-02-09
   * Add anti-forgery-whitelist config option
+  * bump metosin/malli 0.16.4 -> 0.17.0
+  * bump ring/ring-anti-forgery 1.3.1 -> 1.4.0
 
 * 0.4.48 -- 2024-12-15
   * Fix reload-per-request? config option
