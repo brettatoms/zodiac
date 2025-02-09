@@ -232,11 +232,11 @@
       (reitit.ring/router (routes) router-options))))
 
 (defmethod ig/init-key ::jetty [_ {:keys [handler options]}]
+  (log/debug "Starting zodiac.core/jetty...\n")
   (jetty/run-jetty handler options))
 
-;; TODO: jetty doesn't seem to be stopping
 (defmethod ig/halt-key! ::jetty [_ server]
-  (log/debug "Stopping jetty...\n")
+  (log/debug "Stopping zodiac.core/jetty...\n")
   (when server
     (jetty/stop-server server)))
 
