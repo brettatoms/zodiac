@@ -1,8 +1,6 @@
 (ns zodiac.core
   (:require [clojure.data.json :as json]
             [clojure.tools.logging :as log]
-            [ring.middleware.anti-forgery.session :as anti-forgery.session]
-            [ring.middleware.anti-forgery.strategy :as anti-forgery.strategy]
             [dev.onionpancakes.chassis.core :as chassis]
             [integrant.core :as ig]
             [malli.core :as m]
@@ -21,6 +19,8 @@
             [reitit.ring.middleware.parameters :as parameters]
             [ring.adapter.jetty9 :as jetty]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
+            [ring.middleware.anti-forgery.session :as anti-forgery.session]
+            [ring.middleware.anti-forgery.strategy :as anti-forgery.strategy]
             [ring.middleware.cookies :refer [wrap-cookies]]
             [ring.middleware.flash :refer [wrap-flash]]
             [ring.middleware.session :refer [wrap-session]]
