@@ -31,7 +31,7 @@ What Zodiac includes by default:
  - No configuration over code
  - No path based routing, etc.
  - Expect a certain database
- - Asset bundling
+ - Asset bundling (see [Zodiac Assets](https://github.com/brettatoms/zodiac-assets))
 
 And that's about it.  Zodiac is mostly feature complete although you can expect plenty of bug fixes and polish before a 1.0.x release.  Additional features like common database setup and asset handling will be done as Zodiac extensions.
 
