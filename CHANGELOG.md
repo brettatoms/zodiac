@@ -1,5 +1,8 @@
 # Change Log
 
+* 0.4.58 -- 2025-02-12
+  * Simplify the anti-forgery whitelist matching
+
 * 0.4.52 -- 2025-02-09
   * Add anti-forgery-whitelist config option
   * bump metosin/malli 0.16.4 -> 0.17.0
