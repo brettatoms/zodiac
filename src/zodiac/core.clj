@@ -126,31 +126,28 @@
 
 (defmethod ig/init-key ::anti-forgery-config [_ {:keys [whitelist]}]
   (let [session-strategy (anti-forgery.session/session-strategy)]
-    ;; An anti-forgery strategy that wraps the session strategy but also allows
-    ;; providing a whitelist of paths.
-    (letfn [(uri-matches? [uri pattern]
-              (re-matches (re-pattern pattern) uri))]
-      {:read-token (fn [request]
-                     ;; Duplicates ring.middleware.anti-forgery/default-request-token but
-                     ;; also considers a uri that matches the whitelist a valid request
-                     (let [form-params (merge (:form-params request)
-                                              (:multipart-params request))
-                           uri (:uri request)]
-                       (or (some? (some #(uri-matches? uri %) whitelist))
-                           (-> request form-params (get "__anti-forgery-token"))
-                           (-> request :headers (get "x-csrf-token"))
-                           (-> request :headers (get "x-xsrf-token")))))
-       :strategy (reify anti-forgery.strategy/Strategy
-                   (valid-token? [_ request token]
-                     (let [uri (:uri request)]
-                       ;; If the uri matches on of the whitelist patterns then return true
-                       ;; else return (valid-token?) from the session-strategy
-                       (or (some? (some #(uri-matches? uri %) whitelist))
-                           (.valid-token? session-strategy request token))))
-                   (get-token [_ request]
-                     (.get-token session-strategy request))
-                   (write-token [_ request response token]
-                     (.write-token session-strategy request response token)))})))
+    {:read-token (fn [{:keys [uri headers form-params multipart-params] :as request}]
+                   ;; Duplicates ring.middleware.anti-forgery/default-request-token but
+                   ;; also considers a uri that matches the whitelist a valid request
+                   (let [params (merge form-params multipart-params)
+                         uri-matches? (fn [uri pattern] (re-matches (re-pattern pattern) uri))]
+                     (or (some? (some #(uri-matches? uri %) whitelist))
+                         (get params "__anti-forgery-token")
+                         (get headers "x-csrf-token")
+                         (get headers "x-xsrf-token"))))
+     ;; An anti-forgery strategy that wraps the session strategy but also allows
+     ;; check if read-token returns a true value for the token, i.e. the uri
+     ;; matched a path in the whitelist
+     :strategy (reify anti-forgery.strategy/Strategy
+                 (valid-token? [_ request token]
+                   ;; If read-token returned true for the token value then
+                   ;; assume its a valid token
+                   (or (true? token)
+                       (.valid-token? session-strategy request token)))
+                 (get-token [_ request]
+                   (.get-token session-strategy request))
+                 (write-token [_ request response token]
+                   (.write-token session-strategy request response token)))}))
 
 (defmethod ig/init-key ::middleware [_ {:keys [context cookie-attrs error-handlers session-store anti-forgery-config]}]
   [;; Read and write cookies
@@ -249,8 +246,7 @@
     ;; Extensions are a seq of functions that accept the system config
     ;; map and return a transformed system config map
     [:extensions [:sequential :any]]
-    ;; Allow putting things in the ::context of the request. Allow it to be a
-    ;; map of keywords to anything.
+    ;; Add keys to the request context.
     [:request-context [:map-of :keyword :any]]
     [:cookie-secret [:or
                      [:string {:min 16 :max 16}]
