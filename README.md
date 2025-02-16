@@ -118,6 +118,10 @@ Zodiac can be extended using a sequence of functions that take an integrant syst
           :extensions [service-ext]})
 ```
 
+### Examples
+ - [Zodiac Todo App](https://github.com/brettatoms/zodiac-todo-example): A very basic todo app build with Zodiac, Zodiac Assets, Zodiac SQL, Sqlite, AlpineJS, Htmx, Tailwind and Vite.
+ - [Websocket example](/examples/websocket):  An example of how to uses websockets with Zodiac
+
 ### Extensions
 
 - [Zodiac Assets](https://github.com/brettatoms/zodiac-assets): Static asset
