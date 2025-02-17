@@ -299,7 +299,18 @@
            config (reduce #(%2 %1) config (:extensions options []))]
 
        (ig/load-namespaces config)
-       (ig/init config)))))
+
+       (try
+         (ig/init config)
+         (catch clojure.lang.ExceptionInfo e
+           (log/error e)
+           ;; Roll back system start if there's an error
+           (when-let [system (-> e ex-data :system)]
+             (ig/halt! system))
+
+           (throw (ex-info (str "Error starting Zodiac: " (ex-message e) )
+                           (ex-data e)
+                           e))))))))
 
 (defn stop
   "Stop the zodiac server.  Accepts the system map returned"
