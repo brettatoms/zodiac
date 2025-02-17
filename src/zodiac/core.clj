@@ -308,7 +308,7 @@
            (when-let [system (-> e ex-data :system)]
              (ig/halt! system))
 
-           (throw (ex-info (str "Error starting Zodiac: " (ex-message e) )
+           (throw (ex-info (str "Error starting Zodiac: " (ex-message e))
                            (ex-data e)
                            e))))))))
 

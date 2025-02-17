@@ -1,5 +1,8 @@
 # Change Log
 
+* 0.4.61 -- 2025-02-17
+  * Rollback Zodiac start if there's an error when initializing the system
+
 * 0.4.58 -- 2025-02-12
   * Simplify the anti-forgery whitelist matching
 
