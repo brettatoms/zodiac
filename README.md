@@ -1,41 +1,74 @@
-# Zodiac
+# Zodiac: A Minimalist Clojure Web Framework Focused on Flexibility and Developer Freedom
 
 [![Clojars Project](https://img.shields.io/clojars/v/com.github.brettatoms/zodiac.svg)](https://clojars.org/com.github.brettatoms/zodiac)
 
 Come chat in [#zodiac](https://clojurians.slack.com/archives/C07V6RVUN7J)
 
-Zodiac is a small web framework for Clojure that provides a reasonable set of defaults while also being easily extensible.  Zodiac stands on the shoulders of giants rather than being innovative.  At its core Zodiac is mostly just a preconfigured Ring app and not more that a few hundred lines of code.
+# Why Zodiac?
 
-Zodiac tries to fill a similar niche as the [Flask](https://flask.palletsprojects.com) framework with defaults that make it quick to start a new Clojure based web app without being heavy-handed.
+Clojure's web ecosystem offers incredible power through modular libraries, but starting a new project often means:
+- Endless decisions about routing, middleware, and templating
+- Boilerplate wiring of disparate components
+- Either too much magic or not enough structure
 
-What Zodiac includes by default:
+**Zodiac offers a third way** - a curated foundation that handles web fundamentals while leaving *you* in control. Think of it as **Flask for Clojure** - a lightweight framework that:
+- 🛠️ Provides essential web toolkit out of the box
+- 🧩 Lets you choose your own libraries for databases, auth, etc.
+- 🚀 Gets you from zero to production fast
+- 🔧 Grows gracefully from prototype to complex app
 
- - Routing and middleware.  We use [Reitit](https://github.com/metosin/reitit)
- - Request and response handing with [Ring](https://github.com/ring-clojure/ring).
- - A jetty server (though Jetty can be turned off)
- - Automatic Hiccup-based HTML rendering using [Chassis](https://github.com/onionpancakes/chassis).
- - Websocket support
- - File streaming
- - Flash messages
- - Cookies and secure session handler
- - Form and JSON request parsing
- - Extensible. Pass a list of functions to extend Zodiac.  Override the error handlers.
- - Convenience
-   - Helpers to lookup routes
-   - Helpers to return hiccup and JSON responses
-   - A request context
-   - Variables dynamically bound to the current request, router and session
+```clojure
+(ns myapp
+  (:require [zodiac.core :as z]))
 
- What Zodiac doesn't do:
- - Dictate a file structure with generators or scaffolding.
- - No configuration over code
- - No path based routing, etc.
- - Expect a certain database - (see [Zodiac SQL](https://github.com/brettatoms/zodiac-sql))
- - Asset bundling (see [Zodiac Assets](https://github.com/brettatoms/zodiac-assets))
+;; A complete web app in 5 lines
+(defn routes []
+  [["/" {:get (fn [_] [:h1 "Hello World!"])}]])
 
-And that's about it.  Zodiac is mostly feature complete although you can expect plenty of bug fixes and polish before a 1.0.x release.  Additional features like common database setup and asset handling will be done as Zodiac extensions.
+(z/start! {:routes #'routes}) ; Start server on port 3000
+```
 
-### Getting started
+## Features
+
+### Batteries Included (But Replaceable)
+- 🚪 **Smart Routing**: Reitit-based with path params, coercion, and middleware
+- 📦 **Essential Middleware**: Sessions, cookies, CSRF, params parsing
+- 💬 **Templating**: Hiccup HTML responses by default (overrideable)
+- 🔌 **WebSockets**: Built-in async support
+- ⚡ **Hot Reloading**: Develop without restarting
+- 🛡 **Security**: Secure session cookies, CSRF protection
+- 📡 **JSON API Ready**: Helpers for JSON requests/responses
+
+### Philosophy
+- **No hidden magic** - Everything explicit, nothing automatic
+- **Your app structure** - No enforced directory layout
+- **Your choices** - Bring your own database, auth, CSS framework
+- **Escape hatches** - All components replaceable
+- **Transparent stack** - Built on proven libraries (Ring, Reitit, Jetty)
+
+## Why Zodiac is Different
+
+Most Clojure web frameworks live on this spectrum:
+
+```
+[DIY Libraries] <-----------[Zodiac]-----------> [Full-stack Frameworks]
+                      (Curated essentials)          (Rails-like opinions)
+```
+
+Where others might prescribe:
+- Specific database libraries
+- React/CLJS frontend setups
+- Authentication systems
+- Directory structures
+- Deployment configurations
+
+**Zodiac says no.** We provide the web toolkit - you choose the rest. Perfect when:
+- You want Ring/Reitit best practices without the setup
+- You're building a JSON API that might need HTML routes later
+- You want to prototype fast but need room to grow
+- You prefer choosing your own components
+
+## Getting Started
 
 ``` clojure
 (ns myapp
