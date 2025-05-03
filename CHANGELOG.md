@@ -1,5 +1,11 @@
 # Change Log
 
+* 0.4.63 -- 2025-02-17
+  * Bump info.sunng/ring-jetty9-adapter 0.35.1 ->  0.37.3
+  * Bump org.clojure/data.json 2.4.0 -> 2.5.1
+  * Bump ring/ring-core 1.13.0 -> 1.14.1
+  * Bump ring/ring-devel 1.13.0 -> 1.14.1
+
 * 0.4.61 -- 2025-02-17
   * Rollback Zodiac start if there's an error when initializing the system
 
