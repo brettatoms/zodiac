@@ -5,8 +5,8 @@
 
 (def lib 'com.github.brettatoms/zodiac)
 
-(defn- version-base [patch] (format "0.4.%s" patch))
-(def version (version-base (b/git-count-revs nil))) ;; git rev-list --count --all
+(defn- version-base [patch] (format "0.5.%s" patch))
+(def version (version-base (b/git-count-revs nil))) ;; git rev-list --count HEAD
 (def snapshot (version-base "9999-SNAPSHOT"))
 (def class-dir "target/classes")
 (def jar-file (format "target/%s-%s.jar" (name lib) version))

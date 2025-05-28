@@ -1,5 +1,12 @@
 # Change Log
 
+* 0.5.64 -- 2025-05-28
+  * Bump info.sunng/ring-jetty9-adapter 0.37.3 ->  0.37.4
+  * Bump metosin/malli 0.17.0 -> 0.18.0
+  * Bump metosin/reitit 0.7.2 -> 0.9.1
+  * Bump metosin/reitit-dev 0.7.2 -> 0.9.1
+  * Bump metosin/reitit-middleware 0.7.2 -> 0.9.1
+
 * 0.4.62 -- 2025-02-17
   * Bump info.sunng/ring-jetty9-adapter 0.35.1 ->  0.37.3
   * Bump org.clojure/data.json 2.4.0 -> 2.5.1
