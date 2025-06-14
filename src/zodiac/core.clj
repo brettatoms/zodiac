@@ -17,7 +17,7 @@
             [reitit.ring.middleware.multipart :as multipart]
             [reitit.ring.middleware.muuntaja :as muuntaja.middle]
             [reitit.ring.middleware.parameters :as parameters]
-            [ring.adapter.jetty9 :as jetty]
+            [ring.adapter.jetty :as jetty]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.anti-forgery.session :as anti-forgery.session]
             [ring.middleware.anti-forgery.strategy :as anti-forgery.strategy]
@@ -235,7 +235,7 @@
 (defmethod ig/halt-key! ::jetty [_ server]
   (log/debug "Stopping zodiac.core/jetty...\n")
   (when server
-    (jetty/stop-server server)))
+    (.stop server)))
 
 (def ^:private Options
   (mu/optional-keys

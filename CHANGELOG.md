@@ -1,5 +1,8 @@
 # Change Log
 
+* 0.6.65 -- 2025-06-14
+  * Switch from info.sunng/ring-jetty9-adapter to ring/ring-jetty-adapter
+
 * 0.5.64 -- 2025-05-28
   * Bump info.sunng/ring-jetty9-adapter 0.37.3 ->  0.37.4
   * Bump metosin/malli 0.17.0 -> 0.18.0
