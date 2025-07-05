@@ -1,5 +1,8 @@
 # Change Log
 
+* 0.6.66 -- 2025-07-05
+  * Use the logger instead of println
+
 * 0.6.65 -- 2025-06-14
   * Switch from info.sunng/ring-jetty9-adapter to ring/ring-jetty-adapter
 

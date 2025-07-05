@@ -120,7 +120,8 @@
 
             ;; print stack-traces for all exceptions
             ::exception/wrap (fn [handler e request]
-                               (println "ERROR" (pr-str (:uri request)))
+                               (log/error "ERROR: " (pr-str (:uri request)))
+                               (log/error e)
                                (handler e request))}
            custom-handlers))))
 
@@ -207,7 +208,7 @@
   (when (and reload-per-request?
              (or (not (var? routes))
                  (not (fn? (var-get routes)))))
-    (println "WARNING: For :reload-per-request? to work you need to pass a function var for routes."))
+    (log/warn "WARNING: For :reload-per-request? to work you need to pass a function var for routes."))
   (let [router-options (cond-> {;; Use for pretty exceptions for route
                                 ;; definition errors and not exceptions during
                                 ;; requests
@@ -270,7 +271,7 @@
    (start {}))
   ([options]
    (if-not (m/validate Options options)
-     (println "WARNING: Invalid options: " (me/humanize (m/explain Options options)))
+     (log/warn "WARNING: Invalid options: " (me/humanize (m/explain Options options)))
      (let [config (cond-> {::cookie-store {:secret (:cookie-secret options)}
                            ::anti-forgery-config {:whitelist (:anti-forgery-whitelist options [])}
                            ::middleware {:context (:request-context options {})
