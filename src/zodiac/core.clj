@@ -150,41 +150,43 @@
                  (write-token [_ request response token]
                    (.write-token session-strategy request response token)))}))
 
-(defmethod ig/init-key ::middleware [_ {:keys [context cookie-attrs error-handlers session-store anti-forgery-config]}]
-  [;; Read and write cookies
-   wrap-cookies
-   ;; Read and write the session cookie
-   [wrap-session {:flash true
-                  :cookie-attrs cookie-attrs
-                  :store session-store}]
-   ;; Coerce query-params & form-params
-   parameters/parameters-middleware
-   ;; Parse multipart data
-   multipart/multipart-middleware
-   ;; content-negotiation
-   muuntaja.middle/format-negotiate-middleware
-   ;; Encoding response body
-   muuntaja.middle/format-response-middleware
-   ;; Handle exceptions
-   (create-exception-middleware error-handlers)
-   ;; Flash messages in the session
-   wrap-flash
-   ;; Check CSRF tokens
-   [wrap-anti-forgery anti-forgery-config]
-   ;; decoding request body
-   muuntaja.middle/format-request-middleware
-   ;; coercing response bodys
-   coercion/coerce-response-middleware
-   ;; coercing request parameters
-   coercion/coerce-request-middleware
-   ;; coerce exceptions
-   coercion/coerce-exceptions-middleware
-   ;; Populate the request context
-   [context-middleware context]
-   ;; Bind the request globals
-   bind-globals-middleware
-   ;; Vectors that are returned by handlers will be rendered to html
-   render-html-middleware])
+(defmethod ig/init-key ::middleware
+  [_ {:keys [context cookie-attrs error-handlers extra session-store anti-forgery-config]}]
+  (into (or extra [])
+        [ ;; Read and write cookies
+         wrap-cookies
+         ;; Read and write the session cookie
+         [wrap-session {:flash true
+                        :cookie-attrs cookie-attrs
+                        :store session-store}]
+         ;; Coerce query-params & form-params
+         parameters/parameters-middleware
+         ;; Parse multipart data
+         multipart/multipart-middleware
+         ;; content-negotiation
+         muuntaja.middle/format-negotiate-middleware
+         ;; Encoding response body
+         muuntaja.middle/format-response-middleware
+         ;; Handle exceptions
+         (create-exception-middleware error-handlers)
+         ;; Flash messages in the session
+         wrap-flash
+         ;; Check CSRF tokens
+         [wrap-anti-forgery anti-forgery-config]
+         ;; decoding request body
+         muuntaja.middle/format-request-middleware
+         ;; coercing response bodys
+         coercion/coerce-response-middleware
+         ;; coercing request parameters
+         coercion/coerce-request-middleware
+         ;; coerce exceptions
+         coercion/coerce-exceptions-middleware
+         ;; Populate the request context
+         [context-middleware context]
+         ;; Bind the request globals
+         bind-globals-middleware
+         ;; Vectors that are returned by handlers will be rendered to html
+         render-html-middleware]))
 
 (defmethod ig/init-key ::default-handler [_ _]
   (reitit.ring/create-default-handler))
@@ -274,7 +276,8 @@
      (log/warn "WARNING: Invalid options: " (me/humanize (m/explain Options options)))
      (let [config (cond-> {::cookie-store {:secret (:cookie-secret options)}
                            ::anti-forgery-config {:whitelist (:anti-forgery-whitelist options [])}
-                           ::middleware {:context (:request-context options {})
+                           ::middleware {:extra (:middleware options)
+                                         :context (:request-context options {})
                                          :cookie-attrs (:cookie-attrs options {:http-only true
                                                                                :same-site :lax})
                                          :session-store (ig/ref ::cookie-store)

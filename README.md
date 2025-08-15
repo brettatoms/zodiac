@@ -65,6 +65,7 @@ The `zodiac.core/start` function takes a single options map with the following k
 - `:reload-per-request?`: Reload the routes on every request. For this to work you will need to pass the var of the routes function, e.g. `#'routes`.
 - `:print-request-diffs?`: Print a diff of each request between each middleware.
 - `:start-server?`: Set to `false` to disable the embedded jetty server.
+- `:middleware`: A list of ring middleware. Wraps, not replaces, the default middleware.
 
 ### Render HTML
 
