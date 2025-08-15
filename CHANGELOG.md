@@ -1,6 +1,6 @@
 # Change Log
 
-* 0.6.67 -- 2025-08-15
+* Unreleased -- 2025-08-15
   * Add a :middleware option to make it easier to wrap the default middleware.
 
 * 0.6.66 -- 2025-07-05

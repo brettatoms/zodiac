@@ -153,7 +153,7 @@
 (defmethod ig/init-key ::middleware
   [_ {:keys [context cookie-attrs error-handlers extra session-store anti-forgery-config]}]
   (into (or extra [])
-        [ ;; Read and write cookies
+        [;; Read and write cookies
          wrap-cookies
          ;; Read and write the session cookie
          [wrap-session {:flash true
