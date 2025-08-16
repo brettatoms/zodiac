@@ -240,20 +240,22 @@
   (when server
     (.stop server)))
 
-(def ^:private Options
+(def Options
   (mu/optional-keys
    [:map
     [:routes [:or
-              [:-> :any [:sequential :any]]
+              [:fn #(fn? %)]
               [:sequential :any]]]
     ;; Extensions are a seq of functions that accept the system config
     ;; map and return a transformed system config map
-    [:extensions [:sequential :any]]
+    [:extensions [:sequential [:->
+                               [:map-of :keyword :any]
+                               [:map-of :keyword :any]]]]
     ;; Add keys to the request context.
     [:request-context [:map-of :keyword :any]]
     [:cookie-secret [:or
                      [:string {:min 16 :max 16}]
-                     [bytes? {:min 16 :max 16}]]]
+                     [:fn #(and (bytes? %) (= (count %) 16))]]]
     [:cookie-attrs [:map-of :keyword :any]]
     [:jetty [:map-of :keyword :any]]
     ;; The port to connect. If the port is also specified in the :jetty key then
@@ -263,17 +265,18 @@
     [:print-request-diffs? :boolean]
     ;; Start the default jetty. Defaults to true.
     [:start-server? :boolean]
-    [:error-handlers :any]
+    [:error-handlers [:map-of :any fn?]]
     [:anti-forgery-whitelist [:sequential [:or
                                            :string
-                                           [:fn #(instance? java.util.regex.Pattern %)]]]]]))
+                                           [:fn #(instance? java.util.regex.Pattern %)]]]]
+    [:middleware [:sequential :any]]]))
 (defn start
   "Start the zodiac server.  Returns an integrant system map."
   ([]
    (start {}))
   ([options]
    (if-not (m/validate Options options)
-     (log/warn "WARNING: Invalid options: " (me/humanize (m/explain Options options)))
+     (log/error (str "Invalid options: " (me/humanize (m/explain Options options))))
      (let [config (cond-> {::cookie-store {:secret (:cookie-secret options)}
                            ::anti-forgery-config {:whitelist (:anti-forgery-whitelist options [])}
                            ::middleware {:extra (:middleware options)

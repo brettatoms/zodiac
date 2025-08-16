@@ -2,6 +2,7 @@
   (:require [clojure.data.json :as json]
             [clojure.test :refer :all]
             [integrant.core :as ig]
+            [malli.core :as m]
             [matcher-combinators.test :refer [match?]]
             [peridot.core :as peri]
             [reitit.ring :as rr]
@@ -283,3 +284,49 @@
         (is (match? {:status 200
                      :headers {"content-type" "text/html"}
                      :body "<!DOCTYPE html><div>hi</div>"} resp))))))
+
+(deftest options-schems
+  (testing "Options - all fields optional"
+    (is (m/validate z/Options {})))
+  (testing "Options :anti-forgery-whitelist"
+    (is (m/validate z/Options {:anti-forgery-whitelist ["test"]}))
+    (is (m/validate z/Options {:anti-forgery-whitelist [#"test"]}))
+    (is (not (m/validate z/Options {:anti-forgery-whitelist [:xxx]}))))
+  (testing "Options :cookie-attrs"
+    (is (m/validate z/Options {:cookie-attrs {:something "test"}}))
+    (is (not (m/validate z/Options {:cookie-attrs :xxx}))))
+  (testing "Options :cookie-secret"
+    (is (m/validate z/Options {:cookie-secret "0123456789abcdef"}))
+    (is (not (m/validate z/Options {:cookie-secret "1234"})))
+    (is (m/validate z/Options {:cookie-secret (.getBytes "0123456789abcdef")}))
+    (is (not (m/validate z/Options {:cookie-secret (.getBytes "1234")}))))
+  (testing "Options :error-handler"
+    (is (m/validate z/Options {:error-handler {:xxx (fn [])}}))
+    (is (not (m/validate z/Options {:extensions "something"}))))
+  (testing "Options :extensions"
+    (is (m/validate z/Options {:extensions [(fn [])]}))
+    (is (not (m/validate z/Options {:extensions ["xxx"]})))
+    #_(is (not (m/validate z/Options {:extensions [:xxx]})))
+    (is (not (m/validate z/Options {:extensions :xxx}))))
+  (testing "Options :middleware"
+    (is (m/validate z/Options {:middleware [(fn [])]}))
+    (is (m/validate z/Options {:middleware []}))
+    (is (not (m/validate z/Options {:middleware "invalid value"}))))
+  (testing "Options :port"
+    (is (m/validate z/Options {:port 1234}))
+    (is (not (m/validate z/Options {:port "1234"})))
+    (is (not (m/validate z/Options {:port nil})))
+    (is (not (m/validate z/Options {:port :xxx}))))
+  (testing "Options :reload-per-request?"
+    (is (m/validate z/Options {:reload-per-request? true}))
+    (is (not (m/validate z/Options {:reload-per-request? nil})))
+    (is (not (m/validate z/Options {:reload-per-request? :xxx}))))
+  (testing "Options :request-context"
+    (is (m/validate z/Options {:request-context {:somekey 1234}}))
+    (is (not (m/validate z/Options {:request-context :xxx}))))
+  (testing "Options :routes"
+    (is (m/validate z/Options {:routes ["/" {:handler (constantly {})}]}))
+    (is (not (m/validate z/Options {:routes :xxx}))))
+  (testing "Options :start-server?"
+    (is (m/validate z/Options {:start-server? true}))
+    (is (not (m/validate z/Options {:start-server? nil})))))
