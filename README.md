@@ -120,6 +120,7 @@ Zodiac can be extended using a sequence of functions that take an integrant syst
 ```
 
 ### Examples
+ - [Clojure Land](https://clojure.land): Discover open-source Clojure libraries and frameworks.
  - [Zodiac Todo App](https://github.com/brettatoms/zodiac-todo-example): A very basic todo app build with Zodiac, Zodiac Assets, Zodiac SQL, Sqlite, AlpineJS, Htmx, Tailwind and Vite.
  - [Websocket example](/examples/websocket):  An example of how to uses websockets with Zodiac
 
