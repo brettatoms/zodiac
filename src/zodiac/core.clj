@@ -103,6 +103,8 @@
       (handler request))))
 
 (defmethod ig/init-key ::cookie-store [_ {:keys [secret]}]
+  (when-not secret
+    (log/warn "No cookie secret was provided. A server restart will invalidate all existing cookie sessions."))
   (cookie-store {:key (cond
                         (bytes? secret) secret
                         (string? secret) (.getBytes secret))}))
@@ -120,7 +122,7 @@
 
             ;; print stack-traces for all exceptions
             ::exception/wrap (fn [handler e request]
-                               (log/error "ERROR: " (pr-str (:uri request)))
+                               (log/error (pr-str (:uri request)))
                                (log/error e)
                                (handler e request))}
            custom-handlers))))
@@ -210,7 +212,7 @@
   (when (and reload-per-request?
              (or (not (var? routes))
                  (not (fn? (var-get routes)))))
-    (log/warn "WARNING: For :reload-per-request? to work you need to pass a function var for routes."))
+    (log/warn "For :reload-per-request? to work you need to pass a function var for routes."))
   (let [router-options (cond-> {;; Use for pretty exceptions for route
                                 ;; definition errors and not exceptions during
                                 ;; requests
