@@ -12,14 +12,14 @@ What Zodiac includes by default:
 
  - Routing and middleware.  We use [Reitit](https://github.com/metosin/reitit)
  - Request and response handing with [Ring](https://github.com/ring-clojure/ring).
- - A jetty server (though Jetty can be turned off)
+ - A Jetty server (though Jetty can be turned off)
  - Automatic Hiccup-based HTML rendering using [Chassis](https://github.com/onionpancakes/chassis).
  - Websocket support
  - File streaming
  - Flash messages
  - Cookies and secure session handler
  - Form and JSON request parsing
- - Extensible. Pass a list of functions to extend Zodiac.  Override the error handlers.
+ - Extensible, see [Zodiac Assets](https://github.com/brettatoms/zodiac-assets) and  [Zodiac SQL](https://github.com/brettatoms/zodiac-sql).
  - Convenience
    - Helpers to lookup routes
    - Helpers to return hiccup and JSON responses
