@@ -66,6 +66,8 @@ The `zodiac.core/start` function takes a single options map with the following k
 - `:print-request-diffs?`: Print a diff of each request between each middleware.
 - `:start-server?`: Set to `false` to disable the embedded jetty server.
 - `:middleware`: A list of ring middleware. Wraps, not replaces, the default middleware.
+- `:default-handler`: Add a handler that gets called if a requested route doesn't match. Zodiac already includes a default handler created with [create-default-handler](https://cljdoc.org/d/metosin/reitit/0.9.1/api/reitit.ring?q=create-default-#create-default-handler).  This option allows a handler to be called before the regular default handler gets called. For more information see the [Default handler](https://cljdoc.org/d/metosin/reitit/0.9.1/doc/ring/default-handler?q=create-default-#default-handler) section in the Reitit docs.
+
 
 ### Render HTML
 
