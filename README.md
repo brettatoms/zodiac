@@ -19,7 +19,7 @@ What Zodiac includes by default:
  - Flash messages
  - Cookies and secure session handler
  - Form and JSON request parsing
- - Extensible, see [Zodiac Assets](https://github.com/brettatoms/zodiac-assets) and  [Zodiac SQL](https://github.com/brettatoms/zodiac-sql).
+ - Extensible, see [Zodiac Assets](https://github.com/brettatoms/zodiac-assets) and  [Zodiac SQL](https://github.com/brettatoms/zodiac-sql)
  - Convenience
    - Helpers to lookup routes
    - Helpers to return hiccup and JSON responses
@@ -33,7 +33,7 @@ What Zodiac includes by default:
  - Expect a certain database - (see [Zodiac SQL](https://github.com/brettatoms/zodiac-sql))
  - Asset bundling (see [Zodiac Assets](https://github.com/brettatoms/zodiac-assets))
 
-And that's about it.  Zodiac is mostly feature complete although you can expect plenty of bug fixes and polish before a 1.0.x release.  Additional features like common database setup and asset handling will be done as Zodiac extensions.
+And that's about it.  Zodiac is mostly feature complete although you can expect plenty of bug fixes and polish before a 1.0.x release.
 
 ### Getting started
 
