@@ -154,53 +154,53 @@
 
 (defmethod ig/init-key ::middleware
   [_ {:keys [context cookie-attrs error-handlers extra session-store anti-forgery-config]}]
-  (into (or extra [])
-        [;; Read and write cookies
-         wrap-cookies
-         ;; Read and write the session cookie
-         [wrap-session {:flash true
-                        :cookie-attrs cookie-attrs
-                        :store session-store}]
-         ;; Coerce query-params & form-params
-         parameters/parameters-middleware
-         ;; Parse multipart data
-         multipart/multipart-middleware
-         ;; content-negotiation
-         muuntaja.middle/format-negotiate-middleware
-         ;; Encoding response body
-         muuntaja.middle/format-response-middleware
-         ;; Handle exceptions
-         (create-exception-middleware error-handlers)
-         ;; Flash messages in the session
-         wrap-flash
-         ;; Check CSRF tokens
-         [wrap-anti-forgery anti-forgery-config]
-         ;; decoding request body
-         muuntaja.middle/format-request-middleware
-         ;; coercing response bodys
-         coercion/coerce-response-middleware
-         ;; coercing request parameters
-         coercion/coerce-request-middleware
-         ;; coerce exceptions
-         coercion/coerce-exceptions-middleware
-         ;; Populate the request context
-         [context-middleware context]
-         ;; Bind the request globals
-         bind-globals-middleware
-         ;; Vectors that are returned by handlers will be rendered to html
-         render-html-middleware]))
+  [;; Read and write cookies
+   wrap-cookies
+   ;; Read and write the session cookie
+   [wrap-session {:flash true
+                  :cookie-attrs cookie-attrs
+                  :store session-store}]
+   ;; Coerce query-params & form-params
+   parameters/parameters-middleware
+   ;; Parse multipart data
+   multipart/multipart-middleware
+   ;; content-negotiation
+   muuntaja.middle/format-negotiate-middleware
+   ;; Encoding response body
+   muuntaja.middle/format-response-middleware
+   ;; Handle exceptions
+   (create-exception-middleware error-handlers)
+   ;; Flash messages in the session
+   wrap-flash
+   ;; Check CSRF tokens
+   [wrap-anti-forgery anti-forgery-config]
+   ;; decoding request body
+   muuntaja.middle/format-request-middleware
+   ;; coercing response bodys
+   coercion/coerce-response-middleware
+   ;; coercing request parameters
+   coercion/coerce-request-middleware
+   ;; coerce exceptions
+   coercion/coerce-exceptions-middleware
+   ;; Populate the request context
+   [context-middleware context]
+   ;; Bind the request globals
+   bind-globals-middleware
+   ;; Vectors that are returned by handlers will be rendered to html
+   render-html-middleware])
 
 (defmethod ig/init-key ::default-handler [_ _]
   (reitit.ring/create-default-handler))
 
-(defmethod ig/init-key ::app [_ {:keys [router default-handlers reload-per-request?]}]
+(defmethod ig/init-key ::app [_ {:keys [router default-handlers reload-per-request? user-middleware]}]
   (let [router-factory (if (fn? router)
                          router
                          (constantly router))
         create-handler (fn []
                          (reitit.ring/ring-handler
                           (router-factory)
-                          (apply reitit.ring/routes default-handlers)))]
+                          (apply reitit.ring/routes default-handlers)
+                          {:middleware user-middleware}))]
     (if reload-per-request?
       (reitit.ring/reloading-ring-handler create-handler)
       (create-handler))))
@@ -281,8 +281,7 @@
      (log/error (str "Invalid options: " (me/humanize (m/explain Options options))))
      (let [config (cond-> {::cookie-store {:secret (:cookie-secret options)}
                            ::anti-forgery-config {:whitelist (:anti-forgery-whitelist options [])}
-                           ::middleware {:extra (:middleware options)
-                                         :context (:request-context options {})
+                           ::middleware {:context (:request-context options {})
                                          :cookie-attrs (:cookie-attrs options {:http-only true
                                                                                :same-site :lax})
                                          :session-store (ig/ref ::cookie-store)
@@ -294,7 +293,7 @@
                                      :print-request-diffs? (:print-request-diffs? options false)}
                            ::default-handler {}
                            ::app {:router (ig/ref ::router)
-                                  :default-handlers [(ig/ref ::default-handler)]
+                                  :user-middleware (:middleware options)
                                   :reload-per-request? (:reload-per-request? options false)}
                            ::jetty {:handler (ig/ref ::app)
                                     :options (merge {:port (or (:port options) 3000)
