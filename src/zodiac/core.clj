@@ -246,7 +246,7 @@
   (mu/optional-keys
    [:map
     [:routes [:or
-              [:fn #(fn? %)]
+              [:fn #(or (fn? %) (var? %))]
               [:sequential :any]]]
     ;; Extensions are a seq of functions that accept the system config
     ;; map and return a transformed system config map
