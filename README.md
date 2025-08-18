@@ -35,6 +35,8 @@ What Zodiac includes by default:
 
 And that's about it.  Zodiac is mostly feature complete although you can expect plenty of bug fixes and polish before a 1.0.x release.
 
+Read the [docs](https://cljdoc.org/d/com.github.brettatoms/zodiac).
+
 ### Getting started
 
 ``` clojure
