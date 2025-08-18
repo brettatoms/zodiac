@@ -1,5 +1,11 @@
 # Change Log
 
+* 0.7.78 -- 2025-08-18
+  * Tighten up options validation.
+  * Make :middleware option wrap the entire app instead of only route handler middleware
+    which we can already do when defining routes.
+  * Allow injecting default handlers before the builtin default handlers
+
 * 0.6.69 -- 2025-08-15
   * Add a :middleware option to make it easier to wrap the default middleware.
 
