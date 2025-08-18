@@ -271,7 +271,9 @@
     [:anti-forgery-whitelist [:sequential [:or
                                            :string
                                            [:fn #(instance? java.util.regex.Pattern %)]]]]
-    [:middleware [:sequential :any]]]))
+    [:middleware [:sequential :any]]
+    [:default-handler [:fn #(fn? %)]]]))
+
 (defn start
   "Start the zodiac server.  Returns an integrant system map."
   ([]
@@ -294,6 +296,9 @@
                            ::default-handler {}
                            ::app {:router (ig/ref ::router)
                                   :user-middleware (:middleware options)
+                                  :default-handlers (if-let [default-handler (options :default-handler)]
+                                                      [default-handler (ig/ref ::default-handler)]
+                                                      [(ig/ref ::default-handler)])
                                   :reload-per-request? (:reload-per-request? options false)}
                            ::jetty {:handler (ig/ref ::app)
                                     :options (merge {:port (or (:port options) 3000)
