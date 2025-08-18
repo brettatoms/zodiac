@@ -153,7 +153,7 @@
                    (.write-token session-strategy request response token)))}))
 
 (defmethod ig/init-key ::middleware
-  [_ {:keys [context cookie-attrs error-handlers extra session-store anti-forgery-config]}]
+  [_ {:keys [context cookie-attrs error-handlers session-store anti-forgery-config]}]
   [;; Read and write cookies
    wrap-cookies
    ;; Read and write the session cookie
