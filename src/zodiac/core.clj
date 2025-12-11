@@ -280,7 +280,9 @@
    (start {}))
   ([options]
    (if-not (m/validate Options options)
-     (log/error (str "Invalid options: " (me/humanize (m/explain Options options))))
+     (let [errors (me/humanize (m/explain Options options))]
+       (log/error (str "Invalid options: " errors))
+       (throw (ex-info "Invalid Zodiac options" {:validation-errors errors})))
      (let [config (cond-> {::cookie-store {:secret (:cookie-secret options)}
                            ::anti-forgery-config {:whitelist (:anti-forgery-whitelist options [])}
                            ::middleware {:context (:request-context options {})
@@ -315,15 +317,19 @@
 
        (try
          (ig/init config)
-         (catch clojure.lang.ExceptionInfo e
-           (log/error e)
-           ;; Roll back system start if there's an error
-           (when-let [system (-> e ex-data :system)]
-             (ig/halt! system))
-
-           (throw (ex-info (str "Error starting Zodiac: " (ex-message e))
-                           (ex-data e)
-                           e))))))))
+         (catch Throwable e
+           (log/error e "Error starting Zodiac")
+           ;; Attempt rollback if partial system exists in exception data
+           (when (instance? clojure.lang.ExceptionInfo e)
+             (when-let [system (:system (ex-data e))]
+               (try
+                 (log/info "Rolling back partially started system...")
+                 (ig/halt! system)
+                 (log/info "Rollback complete")
+                 (catch Throwable halt-error
+                   (log/error halt-error "Error during system rollback")))))
+           ;; Rethrow the original exception
+           (throw e)))))))
 
 (defn stop
   "Stop the zodiac server.  Accepts the system map returned"

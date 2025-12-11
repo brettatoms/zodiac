@@ -1076,3 +1076,77 @@
       (is (match? {:status 200
                    :headers {"X-Custom-Header" "custom-value"}}
                   resp)))))
+
+;;; ==========================================================================
+;;; Startup Error Handling Tests
+;;; ==========================================================================
+
+(deftest startup-invalid-options-throws
+  (testing "invalid options throws exception instead of returning nil"
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo
+                          #"Invalid Zodiac options"
+                          (z/start {:port "not-an-int"}))))
+
+  (testing "exception contains validation errors"
+    (try
+      (z/start {:port "not-an-int"})
+      (catch clojure.lang.ExceptionInfo e
+        (is (contains? (ex-data e) :validation-errors))))))
+
+(deftest startup-failure-rolls-back-components
+  (testing "components are rolled back when a later component fails"
+    (let [started-components (atom [])
+          stopped-components (atom [])
+          ;; Extension that adds a component which tracks start/stop
+          tracking-ext (fn [cfg]
+                         (assoc cfg
+                                ::test-component-a {:name :a
+                                                    :started started-components
+                                                    :stopped stopped-components}
+                                ::test-component-b {:name :b
+                                                    :dep (ig/ref ::test-component-a)
+                                                    :started started-components
+                                                    :stopped stopped-components}))
+          ;; Extension that adds a failing component that depends on test-component-b
+          failing-ext (fn [cfg]
+                        (assoc cfg
+                               ::failing-component {:dep (ig/ref ::test-component-b)}))]
+
+      ;; Define init-key for our test components
+      (defmethod ig/init-key ::test-component-a [_ {:keys [name started]}]
+        (swap! started conj name)
+        {:name name :stopped stopped-components})
+
+      (defmethod ig/init-key ::test-component-b [_ {:keys [name started]}]
+        (swap! started conj name)
+        {:name name :stopped stopped-components})
+
+      (defmethod ig/halt-key! ::test-component-a [_ {:keys [name stopped]}]
+        (swap! stopped conj name))
+
+      (defmethod ig/halt-key! ::test-component-b [_ {:keys [name stopped]}]
+        (swap! stopped conj name))
+
+      ;; Define init-key that throws
+      (defmethod ig/init-key ::failing-component [_ _]
+        (throw (ex-info "Component failed to start" {:reason :test-failure})))
+
+      ;; Verify exception is thrown
+      (is (thrown? clojure.lang.ExceptionInfo
+                   (z/start {:routes ["/" {:get (constantly {:status 200})}]
+                             :start-server? false
+                             :cookie-secret "1234567890123456"
+                             :extensions [tracking-ext failing-ext]})))
+
+      ;; Verify both test components were started in order (a before b due to dependency)
+      (is (= [:a :b] @started-components))
+
+      ;; Verify both test components were stopped in reverse order (b before a)
+      (is (= [:b :a] @stopped-components))
+
+      ;; Clean up the defmethods
+      (remove-method ig/init-key ::test-component-a)
+      (remove-method ig/init-key ::test-component-b)
+      (remove-method ig/halt-key! ::test-component-a)
+      (remove-method ig/halt-key! ::test-component-b)
+      (remove-method ig/init-key ::failing-component))))
