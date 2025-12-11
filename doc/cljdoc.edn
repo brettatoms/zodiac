@@ -1,3 +1,9 @@
 {:cljdoc.doc/tree [["Readme" {:file "README.md"}]
                    ["Change Log" {:file "CHANGELOG.md"}]
-                   ["Routing" {:file "doc/routing.md"}]]}
+                   ["Guides" {}
+                    ["Routing" {:file "doc/routing.md"}]
+                    ["Request & Response" {:file "doc/request-response.md"}]
+                    ["Sessions & Flash" {:file "doc/sessions.md"}]
+                    ["Error Handling" {:file "doc/error-handling.md"}]
+                    ["Middleware" {:file "doc/middleware.md"}]
+                    ["Extensions" {:file "doc/extensions.md"}]]]}
