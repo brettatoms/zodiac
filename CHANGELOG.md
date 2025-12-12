@@ -1,6 +1,6 @@
 # Change Log
 
-* 0.8.x -- unreleased
+* 0.8.89 -- 2025-12-11
   * Improved startup error handling: invalid options now throw instead of returning nil
   * Improved startup failure rollback to catch all exception types and properly halt partially-started components in reverse order
   * Added comprehensive test coverage for middleware and request/response flow (40+ new tests)
