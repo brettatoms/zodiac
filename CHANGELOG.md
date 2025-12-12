@@ -5,6 +5,7 @@
   * Improved startup failure rollback to catch all exception types and properly halt partially-started components in reverse order
   * Added comprehensive test coverage for middleware and request/response flow (40+ new tests)
   * Added documentation for error handling, sessions & flash, request/response, middleware, and extensions
+  * Replace clojure.data.json with charred for faster json decoding/encoding
   * Bump org.clojure/clojure 1.12.0 -> 1.12.4
   * Bump integrant/integrant 0.13.1 -> 1.0.1
   * Bump metosin/malli 0.18.0 -> 0.20.0
