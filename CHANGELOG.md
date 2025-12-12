@@ -1,5 +1,20 @@
 # Change Log
 
+* 0.8.x -- unreleased
+  * Improved startup error handling: invalid options now throw instead of returning nil
+  * Improved startup failure rollback to catch all exception types and properly halt partially-started components in reverse order
+  * Added comprehensive test coverage for middleware and request/response flow (40+ new tests)
+  * Added documentation for error handling, sessions & flash, request/response, middleware, and extensions
+  * Bump org.clojure/clojure 1.12.0 -> 1.12.4
+  * Bump integrant/integrant 0.13.1 -> 1.0.1
+  * Bump metosin/malli 0.18.0 -> 0.20.0
+  * Bump metosin/reitit 0.9.1 -> 0.9.2
+  * Bump metosin/reitit-dev 0.9.1 -> 0.9.2
+  * Bump metosin/reitit-middleware 0.9.1 -> 0.9.2
+  * Bump ring/ring-core 1.14.1 -> 1.15.3
+  * Bump ring/ring-devel 1.14.1 -> 1.15.3
+  * Bump ring/ring-jetty-adapter 1.14.1 -> 1.15.3
+
 * 0.7.78 -- 2025-08-18
   * Tighten up options validation.
   * Make :middleware option wrap the entire app instead of only route handler middleware
