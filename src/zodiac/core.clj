@@ -1,5 +1,5 @@
 (ns zodiac.core
-  (:require [clojure.data.json :as json]
+  (:require [charred.api :as charred]
             [clojure.tools.logging :as log]
             [dev.onionpancakes.chassis.core :as chassis]
             [integrant.core :as ig]
@@ -7,6 +7,7 @@
             [malli.error :as me]
             [malli.util :as mu]
             [muuntaja.core :as muuntaja]
+            [muuntaja.format.charred :as muuntaja.charred]
             [reitit.coercion.malli]
             [reitit.core :as r]
             [reitit.dev.pretty :as pretty]
@@ -63,7 +64,7 @@
     :headers {"content-type" "application/json"}
     :body (cond
             (string? data) data
-            :else (json/write-str data))}))
+            :else (charred/write-json-str data))}))
 
 (defn url-for
   "Return a url string given a route name and optional arg and query params. This
@@ -176,7 +177,7 @@
    [wrap-anti-forgery anti-forgery-config]
    ;; decoding request body
    muuntaja.middle/format-request-middleware
-   ;; coercing response bodys
+   ;; coercing response body
    coercion/coerce-response-middleware
    ;; coercing request parameters
    coercion/coerce-request-middleware
@@ -213,11 +214,17 @@
              (or (not (var? routes))
                  (not (fn? (var-get routes)))))
     (log/warn "For :reload-per-request? to work you need to pass a function var for routes."))
-  (let [router-options (cond-> {;; Use for pretty exceptions for route
+  (let [muuntaja (muuntaja/create
+                  ;; Use charred as the default json encoder/decoder instead of the default Jackson
+                  ;; muuntaja/default-options
+                  (assoc-in muuntaja/default-options
+                            [:formats "application/json"]
+                            muuntaja.charred/format))
+        router-options (cond-> {;; Use for pretty exceptions for route
                                 ;; definition errors and not exceptions during
                                 ;; requests
                                 :exception pretty/exception
-                                :data {:muuntaja muuntaja/instance
+                                :data {:muuntaja muuntaja
                                        :middleware middleware
                                        :coercion reitit.coercion.malli/coercion}}
                          ;; Print out a diff of the request between each

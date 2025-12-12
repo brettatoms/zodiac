@@ -1,5 +1,5 @@
 (ns zodiac.core-test
-  (:require [clojure.data.json :as json]
+  (:require [charred.api :as charred]
             [clojure.test :refer :all]
             [integrant.core :as ig]
             [malli.core :as m]
@@ -377,7 +377,7 @@
                                             :parameters {:path {:x int?}}}]})
           resp (-> (app {:request-method :get
                          :uri "/abc"})
-                   (update :body (comp json/read-str slurp)))]
+                   (update :body (comp charred/read-json slurp)))]
       (is (match? {:status 400
                    :body {"value" {"x" "abc"}
                           "type" "reitit.coercion/request-coercion"
@@ -854,7 +854,7 @@
           resp (-> (app {:request-method :get
                          :uri "/"
                          :query-string "age=not-a-number"})
-                   (update :body (comp json/read-str slurp)))]
+                   (update :body (comp charred/read-json slurp)))]
       (is (match? {:status 400
                    :body {"type" "reitit.coercion/request-coercion"
                           "coercion" "malli"
@@ -944,7 +944,7 @@
           resp (-> (app {:request-method :get
                          :uri "/"
                          :query-string ""})
-                   (update :body (comp json/read-str slurp)))]
+                   (update :body (comp charred/read-json slurp)))]
       (is (match? {:status 400
                    :body {"type" "reitit.coercion/request-coercion"}}
                   resp)))))
@@ -1076,6 +1076,159 @@
       (is (match? {:status 200
                    :headers {"X-Custom-Header" "custom-value"}}
                   resp)))))
+
+;;; ==========================================================================
+;;; Invalid Parameter Key Tests
+;;; ==========================================================================
+
+(deftest json-body-with-invalid-keyword-keys
+  (testing "JSON body with key starting with number"
+    (let [handler (fn [{:keys [body-params]}]
+                    {:status 200
+                     :body (pr-str body-params)})
+          app (test-client {:routes ["/" {:get csrf-handler
+                                          :post handler}]
+                            :anti-forgery-whitelist ["/"]})
+          resp (-> (peri/session app)
+                   (peri/request "/"
+                                 :request-method :post
+                                 :content-type "application/json"
+                                 :body "{\"123\": \"value\", \"normal\": \"ok\"}")
+                   :response)]
+      (is (match? {:status 200} resp))
+      ;; Check that both keys are accessible (charred keywordizes them)
+      (is (re-find #":123" (:body resp)))
+      (is (re-find #":normal" (:body resp)))))
+
+  (testing "JSON body with key containing spaces"
+    (let [handler (fn [{:keys [body-params]}]
+                    {:status 200
+                     :body (pr-str body-params)})
+          app (test-client {:routes ["/" {:get csrf-handler
+                                          :post handler}]
+                            :anti-forgery-whitelist ["/"]})
+          resp (-> (peri/session app)
+                   (peri/request "/"
+                                 :request-method :post
+                                 :content-type "application/json"
+                                 :body "{\"key with spaces\": \"value\"}")
+                   :response)]
+      (is (match? {:status 200} resp))
+      ;; Clojure allows keywords with spaces when created via `keyword` fn
+      (is (re-find #"key with spaces" (:body resp)))))
+
+  (testing "JSON body with empty string key"
+    (let [handler (fn [{:keys [body-params]}]
+                    {:status 200
+                     :body (pr-str body-params)})
+          app (test-client {:routes ["/" {:get csrf-handler
+                                          :post handler}]
+                            :anti-forgery-whitelist ["/"]})
+          resp (-> (peri/session app)
+                   (peri/request "/"
+                                 :request-method :post
+                                 :content-type "application/json"
+                                 :body "{\"\": \"empty-key-value\"}")
+                   :response)]
+      (is (match? {:status 200} resp))
+      ;; Empty string becomes keyword via (keyword "")
+      (is (re-find #"empty-key-value" (:body resp))))))
+
+(deftest query-params-with-invalid-keyword-keys
+  (testing "query param with key starting with number"
+    (let [handler (fn [{:keys [query-params]}]
+                    {:status 200
+                     :body (pr-str query-params)})
+          app (test-client {:routes ["/" {:get handler}]})
+          resp (app {:request-method :get
+                     :uri "/"
+                     :query-string "123=value&normal=ok"})]
+      (is (match? {:status 200} resp))
+      ;; Query params use string keys by default
+      (is (re-find #"\"123\"" (:body resp)))
+      (is (re-find #"\"normal\"" (:body resp)))))
+
+  (testing "query param with key containing spaces (URL encoded)"
+    (let [handler (fn [{:keys [query-params]}]
+                    {:status 200
+                     :body (pr-str query-params)})
+          app (test-client {:routes ["/" {:get handler}]})
+          resp (app {:request-method :get
+                     :uri "/"
+                     :query-string "key%20with%20spaces=value"})]
+      (is (match? {:status 200} resp))
+      (is (re-find #"key with spaces" (:body resp)))))
+
+  (testing "query param with empty key"
+    (let [handler (fn [{:keys [query-params]}]
+                    {:status 200
+                     :body (pr-str query-params)})
+          app (test-client {:routes ["/" {:get handler}]})
+          resp (app {:request-method :get
+                     :uri "/"
+                     :query-string "=empty-key-value"})]
+      (is (match? {:status 200} resp))
+      (is (re-find #"empty-key-value" (:body resp))))))
+
+(deftest form-params-with-invalid-keyword-keys
+  (testing "form param with key starting with number"
+    (let [handler (fn [{:keys [form-params]}]
+                    {:status 200
+                     :body (pr-str form-params)})
+          app (test-client {:routes ["/" {:get csrf-handler
+                                          :post handler}]})
+          sess (-> (peri/session app)
+                   (peri/request "/"))
+          token (-> sess :response :body)
+          resp (-> sess
+                   (peri/request "/"
+                                 :request-method :post
+                                 :headers {"X-CSRF-Token" token}
+                                 :content-type "application/x-www-form-urlencoded"
+                                 :body "123=value&normal=ok")
+                   :response)]
+      (is (match? {:status 200} resp))
+      ;; Form params use string keys
+      (is (re-find #"\"123\"" (:body resp)))
+      (is (re-find #"\"normal\"" (:body resp)))))
+
+  (testing "form param with key containing spaces (URL encoded)"
+    (let [handler (fn [{:keys [form-params]}]
+                    {:status 200
+                     :body (pr-str form-params)})
+          app (test-client {:routes ["/" {:get csrf-handler
+                                          :post handler}]})
+          sess (-> (peri/session app)
+                   (peri/request "/"))
+          token (-> sess :response :body)
+          resp (-> sess
+                   (peri/request "/"
+                                 :request-method :post
+                                 :headers {"X-CSRF-Token" token}
+                                 :content-type "application/x-www-form-urlencoded"
+                                 :body "key%20with%20spaces=value")
+                   :response)]
+      (is (match? {:status 200} resp))
+      (is (re-find #"key with spaces" (:body resp)))))
+
+  (testing "form param with empty key"
+    (let [handler (fn [{:keys [form-params]}]
+                    {:status 200
+                     :body (pr-str form-params)})
+          app (test-client {:routes ["/" {:get csrf-handler
+                                          :post handler}]})
+          sess (-> (peri/session app)
+                   (peri/request "/"))
+          token (-> sess :response :body)
+          resp (-> sess
+                   (peri/request "/"
+                                 :request-method :post
+                                 :headers {"X-CSRF-Token" token}
+                                 :content-type "application/x-www-form-urlencoded"
+                                 :body "=empty-key-value")
+                   :response)]
+      (is (match? {:status 200} resp))
+      (is (re-find #"empty-key-value" (:body resp))))))
 
 ;;; ==========================================================================
 ;;; Startup Error Handling Tests
