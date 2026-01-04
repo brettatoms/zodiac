@@ -136,3 +136,5 @@ Zodiac can be extended using a sequence of functions that take an integrant syst
 - [Zodiac SQL](https://github.com/brettatoms/zodiac-sql): Helper for connecting
   to SQL database and running
   [HoneySQL](https://github.com/seancorfield/honeysql) queries.
+
+- [Zodiac Headers](https://github.com/brettatoms/zodiac-headers): Add secure HTTP headers to a Zodiac app
