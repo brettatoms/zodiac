@@ -154,13 +154,14 @@
                    (.write-token session-strategy request response token)))}))
 
 (defmethod ig/init-key ::middleware
-  [_ {:keys [context cookie-attrs error-handlers session-store anti-forgery-config]}]
+  [_ {:keys [context cookie-attrs cookie-name error-handlers session-store anti-forgery-config]}]
   [;; Read and write cookies
    wrap-cookies
    ;; Read and write the session cookie
-   [wrap-session {:flash true
-                  :cookie-attrs cookie-attrs
-                  :store session-store}]
+   [wrap-session (cond-> {:flash true
+                          :cookie-attrs cookie-attrs
+                          :store session-store}
+                   cookie-name (assoc :cookie-name cookie-name))]
    ;; Coerce query-params & form-params
    parameters/parameters-middleware
    ;; Parse multipart data
@@ -266,6 +267,7 @@
                      [:string {:min 16 :max 16}]
                      [:fn #(and (bytes? %) (= (count %) 16))]]]
     [:cookie-attrs [:map-of :keyword :any]]
+    [:cookie-name :string]
     [:jetty [:map-of :keyword :any]]
     ;; The port to connect. If the port is also specified in the :jetty key then
     ;; this :port key will be ignored.
@@ -295,6 +297,7 @@
                            ::middleware {:context (:request-context options {})
                                          :cookie-attrs (:cookie-attrs options {:http-only true
                                                                                :same-site :lax})
+                                         :cookie-name (:cookie-name options)
                                          :session-store (ig/ref ::cookie-store)
                                          :error-handlers (:error-handlers options {})
                                          :anti-forgery-config (ig/ref ::anti-forgery-config)}
@@ -339,6 +342,6 @@
            (throw e)))))))
 
 (defn stop
-  "Stop the zodiac server.  Accepts the system map returned"
+  "Stop the zodiac server.  Accepts the system map returned from z/start."
   [system]
   (ig/halt! system))

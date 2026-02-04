@@ -63,6 +63,7 @@ Configure session cookies via start options:
 ```clojure
 (z/start {:routes routes
           :cookie-secret "16-char-secret!"  ;; Required: exactly 16 characters
+          :cookie-name "my-session"         ;; Default: "ring-session"
           :cookie-attrs {:http-only true    ;; Default: true
                          :same-site :lax    ;; Default: :lax
                          :secure true       ;; For HTTPS

@@ -59,7 +59,8 @@ The `zodiac.core/start` function takes a single options map with the following k
 - `:extensions`: A sequence of functions that accept an integrant system configuration map and return a modified integrant system configuration app.
 - `:request-context`: A map of values values to add to the `::z/context` map in the request map.
 - `:cookie-secret`: The secret used to encrypt the cookie
-- `:cookie-attrs`: Override the code settings.  Defaults to `{:http-only true :same-site :lax}`.
+- `:cookie-attrs`: Override the cookie settings.  Defaults to `{:http-only true :same-site :lax}`.
+- `:cookie-name`: The name of the session cookie.  Defaults to `"ring-session"`.
 - `:jetty`: A map of options to pass to `run-jetty` function of the embedded [ring-jetty-adapter](https://ring-clojure.github.io/ring/ring.adapter.jetty.html)
 - `:port`: The port to listen for connections.  If the port is also specified in the `:jetty` map then this value will be ignored.  The default is `3000`.
 - `:error-handlers`: A map of types to error handler functions

@@ -454,6 +454,9 @@
   (testing "Options :cookie-attrs"
     (is (m/validate z/Options {:cookie-attrs {:something "test"}}))
     (is (not (m/validate z/Options {:cookie-attrs :xxx}))))
+  (testing "Options :cookie-name"
+    (is (m/validate z/Options {:cookie-name "my-session"}))
+    (is (not (m/validate z/Options {:cookie-name 123}))))
   (testing "Options :cookie-secret"
     (is (m/validate z/Options {:cookie-secret "0123456789abcdef"}))
     (is (not (m/validate z/Options {:cookie-secret "1234"})))
@@ -754,6 +757,23 @@
                       (re-find #"(?i)max-age=3600" %)
                       (re-find #"(?i)path=/api" %))
                 set-cookie-headers)))))
+
+(deftest custom-cookie-name
+  (testing "session cookie uses custom name when :cookie-name is set"
+    (let [handler (fn [req]
+                    (let [counter (get-in req [:session :counter] 0)]
+                      {:status 200
+                       :body (str counter)
+                       :session {:counter (inc counter)}}))
+          app (test-client {:routes ["/" {:get handler}]
+                            :cookie-name "my-session"})
+          resp (-> (peri/session app)
+                   (peri/request "/")
+                   :response)]
+      (is (some #(re-find #"my-session=" %)
+                (get-in resp [:headers "Set-Cookie"])))
+      (is (not (some #(re-find #"ring-session=" %)
+                     (get-in resp [:headers "Set-Cookie"])))))))
 
 ;;; ==========================================================================
 ;;; Dynamic Variables Tests
