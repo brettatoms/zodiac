@@ -1,6 +1,7 @@
 # Change Log
 
-* 0.9.xx -- Unreleased
+* 0.9.98 -- 2026-03-30
+  * Add `:cookie-name` option
   * Add `:zodiac/skip-csrf` route data to disable CSRF protection per-route (uses compiled middleware for better performance)
   * Deprecate `:anti-forgery-whitelist` option in favor of `:zodiac/skip-csrf` route data
   * Experimental support for async handlers (3-arity `[request respond raise]`). Note: dynamic vars (`*request*`, `*router*`, `*session*`) are not available in async mode.
