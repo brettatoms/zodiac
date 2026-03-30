@@ -63,6 +63,8 @@ z/*router*   ;; Reitit router (for url-for)
 z/*session*  ;; Current session data
 ```
 
+> **Note:** These dynamic vars are only available in synchronous (1-arity) handlers. Async handlers (3-arity `[request respond raise]`) should access data directly from the request map, as dynamic bindings don't propagate across threads.
+
 These are useful in helper functions that don't have direct access to the request:
 
 ```clojure

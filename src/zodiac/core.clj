@@ -84,24 +84,39 @@
          (r/match->path query-params)))))
 
 (defn- context-middleware [handler context]
-  (fn [request]
-    (-> request
-        (assoc ::context context)
-        (handler))))
+  (fn
+    ([request]
+     (handler (assoc request ::context context)))
+    ([request respond raise]
+     (handler (assoc request ::context context) respond raise))))
 
 (defn- render-html-middleware [handler]
-  (fn [request]
-    (let [response (handler request)]
-      (if (vector? response)
-        (html-response response)
-        response))))
+  (fn
+    ([request]
+     (let [response (handler request)]
+       (if (vector? response)
+         (html-response response)
+         response)))
+    ([request respond raise]
+     (handler request
+              (fn [response]
+                (respond (if (vector? response)
+                           (html-response response)
+                           response)))
+              raise))))
 
 (defn- bind-globals-middleware [handler]
-  (fn [{:keys [session ::r/router] :as request}]
-    (binding [*request* request
-              *router* router
-              *session* session]
-      (handler request))))
+  (fn
+    ([{:keys [session ::r/router] :as request}]
+     (binding [*request* request
+               *router* router
+               *session* session]
+       (handler request)))
+    ([{:keys [session ::r/router] :as request} respond raise]
+     (binding [*request* request
+               *router* router
+               *session* session]
+       (handler request respond raise)))))
 
 (defmethod ig/init-key ::cookie-store [_ {:keys [secret]}]
   (when-not secret

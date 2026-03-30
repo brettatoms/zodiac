@@ -1,6 +1,7 @@
 # Change Log
 
 * 0.9.xx -- Unreleased
+  * Experimental support for async handlers (3-arity `[request respond raise]`). Note: dynamic vars (`*request*`, `*router*`, `*session*`) are not available in async mode.
   * Bump metosin/malli 0.20.0 -> 0.20.1
   * Bump metosin/reitit 0.9.2 -> 0.10.1
   * Bump metosin/reitit-dev 0.9.2 -> 0.10.1

@@ -56,6 +56,8 @@ The current session is also bound to `zodiac.core/*session*`:
   (:user-id z/*session*))
 ```
 
+> **Note:** This dynamic var is only available in synchronous handlers. For async handlers, access the session via `(:session request)`.
+
 ### Cookie Configuration
 
 Configure session cookies via start options:
