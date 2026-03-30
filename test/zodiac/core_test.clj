@@ -440,6 +440,31 @@
                      :headers {"content-type" "text/html"}
                      :body "<!DOCTYPE html><div>hi</div>"} resp))))))
 
+(deftest skip-csrf-route-data
+  (let [post-handler (fn [_] [:div "posted"])
+        app (test-client {:routes [[""
+                                    ["/protected" {:post post-handler}]
+                                    ["/unprotected" {:zodiac/skip-csrf true
+                                                     :post post-handler}]]]})]
+    (testing "route without :zodiac/skip-csrf requires CSRF token"
+      (let [resp (-> (peri/session app)
+                     (peri/request "/protected"
+                                   :request-method :post
+                                   :content-type "text/html"
+                                   :body "anything")
+                     :response)]
+        (is (match? {:status 403} resp))))
+
+    (testing "route with :zodiac/skip-csrf true allows POST without token"
+      (let [resp (-> (peri/session app)
+                     (peri/request "/unprotected"
+                                   :request-method :post
+                                   :content-type "text/html"
+                                   :body "anything")
+                     :response)]
+        (is (match? {:status 200
+                     :body "<!DOCTYPE html><div>posted</div>"} resp))))))
+
 ;;; ==========================================================================
 ;;; Options Schema Validation Tests
 ;;; ==========================================================================

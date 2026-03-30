@@ -143,6 +143,8 @@
                                (handler e request))}
            custom-handlers))))
 
+;; DEPRECATED: Use :zodiac/skip-csrf route data instead of :anti-forgery-whitelist
+;; This component will be removed in a future version.
 (defmethod ig/init-key ::anti-forgery-config [_ {:keys [whitelist]}]
   (let [session-strategy (anti-forgery.session/session-strategy)]
     {:read-token (fn [{:keys [uri headers form-params multipart-params] :as request}]
@@ -168,6 +170,17 @@
                  (write-token [_ request response token]
                    (.write-token session-strategy request response token)))}))
 
+(defn- create-anti-forgery-middleware
+  "Creates a compiled anti-forgery middleware.
+   Routes can disable CSRF protection by setting :zodiac/skip-csrf to true in route data.
+   Also supports the deprecated :anti-forgery-whitelist option for backwards compatibility."
+  [anti-forgery-config]
+  {:name ::anti-forgery
+   :compile (fn [route-data _opts]
+              (when-not (:zodiac/skip-csrf route-data)
+                (fn [handler]
+                  (wrap-anti-forgery handler anti-forgery-config))))})
+
 (defmethod ig/init-key ::middleware
   [_ {:keys [context cookie-attrs cookie-name error-handlers session-store anti-forgery-config]}]
   [;; Read and write cookies
@@ -189,8 +202,8 @@
    (create-exception-middleware error-handlers)
    ;; Flash messages in the session
    wrap-flash
-   ;; Check CSRF tokens
-   [wrap-anti-forgery anti-forgery-config]
+   ;; Check CSRF tokens (compiled middleware - skips routes with :zodiac/skip-csrf true)
+   (create-anti-forgery-middleware anti-forgery-config)
    ;; decoding request body
    muuntaja.middle/format-request-middleware
    ;; coercing response body
@@ -292,11 +305,16 @@
     ;; Start the default jetty. Defaults to true.
     [:start-server? :boolean]
     [:error-handlers [:map-of :any fn?]]
+    ;; DEPRECATED: Use :zodiac/skip-csrf route data instead.
+    ;; Will be removed in a future version.
     [:anti-forgery-whitelist [:sequential [:or
                                            :string
                                            [:fn #(instance? java.util.regex.Pattern %)]]]]
     [:middleware [:sequential :any]]
     [:default-handler [:fn #(fn? %)]]]))
+
+;; TODO: Add an integrant component that does everything in start so that if someone wants
+;; to use that instead of calling start then they can.
 
 (defn start
   "Start the zodiac server.  Returns an integrant system map."
@@ -307,54 +325,57 @@
      (let [errors (me/humanize (m/explain Options options))]
        (log/error (str "Invalid options: " errors))
        (throw (ex-info "Invalid Zodiac options" {:validation-errors errors})))
-     (let [config (cond-> {::cookie-store {:secret (:cookie-secret options)}
-                           ::anti-forgery-config {:whitelist (:anti-forgery-whitelist options [])}
-                           ::middleware {:context (:request-context options {})
-                                         :cookie-attrs (:cookie-attrs options {:http-only true
-                                                                               :same-site :lax})
-                                         :cookie-name (:cookie-name options)
-                                         :session-store (ig/ref ::cookie-store)
-                                         :error-handlers (:error-handlers options {})
-                                         :anti-forgery-config (ig/ref ::anti-forgery-config)}
-                           ::router {:routes (:routes options [])
-                                     :middleware (ig/ref ::middleware)
-                                     :reload-per-request? (:reload-per-request? options false)
-                                     :print-request-diffs? (:print-request-diffs? options false)}
-                           ::default-handler {}
-                           ::app {:router (ig/ref ::router)
-                                  :user-middleware (:middleware options)
-                                  :default-handlers (if-let [default-handler (options :default-handler)]
-                                                      [default-handler (ig/ref ::default-handler)]
-                                                      [(ig/ref ::default-handler)])
-                                  :reload-per-request? (:reload-per-request? options false)}
-                           ::jetty {:handler (ig/ref ::app)
-                                    :options (merge {:port (or (:port options) 3000)
-                                                     :join? false}
-                                                    (:jetty options))}}
-                    ;; Remove the ::jetty key if start-server? is false
-                    (not (:start-server? options true))
-                    (dissoc ::jetty))
-           ;; Extensions are a seq of functions that accept the system config
-           ;; map and return a transformed system config map
-           config (reduce #(%2 %1) config (:extensions options []))]
+     (do
+       (when (seq (:anti-forgery-whitelist options))
+         (log/warn ":anti-forgery-whitelist is deprecated. Use :zodiac/skip-csrf route data instead."))
+       (let [config (cond-> {::cookie-store {:secret (:cookie-secret options)}
+                             ::anti-forgery-config {:whitelist (:anti-forgery-whitelist options [])}
+                             ::middleware {:context (:request-context options {})
+                                           :cookie-attrs (:cookie-attrs options {:http-only true
+                                                                                 :same-site :lax})
+                                           :cookie-name (:cookie-name options)
+                                           :session-store (ig/ref ::cookie-store)
+                                           :error-handlers (:error-handlers options {})
+                                           :anti-forgery-config (ig/ref ::anti-forgery-config)}
+                             ::router {:routes (:routes options [])
+                                       :middleware (ig/ref ::middleware)
+                                       :reload-per-request? (:reload-per-request? options false)
+                                       :print-request-diffs? (:print-request-diffs? options false)}
+                             ::default-handler {}
+                             ::app {:router (ig/ref ::router)
+                                    :user-middleware (:middleware options)
+                                    :default-handlers (if-let [default-handler (options :default-handler)]
+                                                        [default-handler (ig/ref ::default-handler)]
+                                                        [(ig/ref ::default-handler)])
+                                    :reload-per-request? (:reload-per-request? options false)}
+                             ::jetty {:handler (ig/ref ::app)
+                                      :options (merge {:port (or (:port options) 3000)
+                                                       :join? false}
+                                                      (:jetty options))}}
+                      ;; Remove the ::jetty key if start-server? is false
+                      (not (:start-server? options true))
+                      (dissoc ::jetty))
+             ;; Extensions are a seq of functions that accept the system config
+             ;; map and return a transformed system config map
+             config (reduce #(%2 %1) config (:extensions options []))]
 
-       (ig/load-namespaces config)
+         (ig/load-namespaces config)
 
-       (try
-         (ig/init config)
-         (catch Throwable e
-           (log/error e "Error starting Zodiac")
-           ;; Attempt rollback if partial system exists in exception data
-           (when (instance? clojure.lang.ExceptionInfo e)
-             (when-let [system (:system (ex-data e))]
-               (try
-                 (log/info "Rolling back partially started system...")
-                 (ig/halt! system)
-                 (log/info "Rollback complete")
-                 (catch Throwable halt-error
-                   (log/error halt-error "Error during system rollback")))))
-           ;; Rethrow the original exception
-           (throw e)))))))
+         (try
+           (ig/init config)
+           (catch Throwable e
+             (log/error e "Error starting Zodiac")
+             ;; Attempt rollback if partial system exists in exception data
+             (when (instance? clojure.lang.ExceptionInfo e)
+               (when-let [system (:system (ex-data e))]
+                 (try
+                   (log/info "Rolling back partially started system...")
+                   (ig/halt! system)
+                   (log/info "Rollback complete")
+                   (catch Throwable halt-error
+                     (log/error halt-error "Error during system rollback")))))
+             ;; Rethrow the original exception
+             (throw e))))))))
 
 (defn stop
   "Stop the zodiac server.  Accepts the system map returned from z/start."

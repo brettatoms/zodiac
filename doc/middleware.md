@@ -88,7 +88,31 @@ In code terms:
 
 ## CSRF Protection
 
-By default, POST/PUT/DELETE requests require a valid CSRF token. To whitelist routes:
+By default, POST/PUT/DELETE requests require a valid CSRF token.
+
+### Disabling CSRF for Specific Routes (Recommended)
+
+Use the `:zodiac/skip-csrf` route data to disable CSRF protection for specific routes:
+
+```clojure
+(def routes
+  [["/api"
+    ["/webhook" {:zodiac/skip-csrf true
+                 :post webhook-handler}]
+    ["/public" {:zodiac/skip-csrf true}  ;; applies to all nested routes
+     ["/data" {:get data-handler}]]]
+   ["/admin"
+    ["/users" {:post create-user}]]])  ;; CSRF required (default)
+```
+
+This approach is preferred because:
+- CSRF settings are co-located with route definitions
+- The middleware is compiled per-route for better performance
+- Routes that skip CSRF don't mount the middleware at all
+
+### Whitelist (Deprecated)
+
+> **Deprecated:** Use `:zodiac/skip-csrf` route data instead. The `:anti-forgery-whitelist` option will be removed in a future version.
 
 ```clojure
 (z/start {:routes routes
