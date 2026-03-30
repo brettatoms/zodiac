@@ -1,5 +1,12 @@
 # Change Log
 
+* 0.9.xx -- Unreleased
+  * Bump metosin/malli 0.20.0 -> 0.20.1
+  * Bump metosin/reitit 0.9.2 -> 0.10.1
+  * Bump metosin/reitit-dev 0.9.2 -> 0.10.1
+  * Bump metosin/reitit-middleware 0.9.2 -> 0.10.1
+  * Bump com.cnuernber/charred 1.037 -> 1.038
+
 * 0.8.89 -- 2025-12-11
   * Improved startup error handling: invalid options now throw instead of returning nil
   * Improved startup failure rollback to catch all exception types and properly halt partially-started components in reverse order
