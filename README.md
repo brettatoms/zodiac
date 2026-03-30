@@ -139,3 +139,5 @@ Zodiac can be extended using a sequence of functions that take an integrant syst
   [HoneySQL](https://github.com/seancorfield/honeysql) queries.
 
 - [Zodiac Headers](https://github.com/brettatoms/zodiac-headers): Add secure HTTP headers to a Zodiac app
+
+- [Zodiac Hot Reload](https://github.com/brettatoms/zodiac-hot-reload): Automatically update changes in the browser via [ring-hot-reload](https://github.com/brettatoms/ring-hot-reload)
