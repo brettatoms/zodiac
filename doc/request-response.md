@@ -14,7 +14,7 @@ Zodiac builds on Ring's request map. Your handlers receive a standard Ring reque
 | `:session` | Session data |
 | `:flash` | Flash message from previous request |
 | `:cookies` | Request cookies |
-| `::z/context` | Values from `:request-context` option and extensions |
+| `:zodiac.core/context` | Values from `:request-context` option and extensions |
 
 ### Parameter Access
 
