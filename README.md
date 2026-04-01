@@ -39,6 +39,15 @@ Read the [docs](https://cljdoc.org/d/com.github.brettatoms/zodiac).
 
 ### Getting started
 
+Generate a new project with the [Zodiac template](https://github.com/brettatoms/zodiac-template):
+
+```bash
+clojure -Ttools install-latest :lib io.github.seancorfield/deps-new :as new
+clojure -Tnew create :template io.github.brettatoms/zodiac-template%zodiac/app :name myorg/myapp
+```
+
+Or start from scratch:
+
 ``` clojure
 (ns myapp
   (:require [zodiac.core :as z]))
