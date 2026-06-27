@@ -1,5 +1,20 @@
 # Change Log
 
+* 0.9.100 -- 2026-06-27
+  * Bump com.cnuernber/charred 1.038 -> 1.039
+  * Bump org.clojure/tools.logging 1.3.0 -> 1.3.1
+  * Bump ring/ring-core 1.15.3 -> 1.15.5
+  * Bump ring/ring-devel 1.15.3 -> 1.15.5
+  * Bump ring/ring-jetty-adapter 1.15.3 -> 1.15.5
+  * Bump com.taoensso/telemere 1.2.0 -> 1.2.1
+  * Bump com.taoensso/telemere-slf4j 1.2.0 -> 1.2.1
+  * Bump nubank/matcher-combinators 3.9.2 -> 3.10.0
+  * Bump org.clojure/test.check 1.1.2 -> 1.1.3
+  * Bump io.github.clojure/tools.build 0.10.11 -> 0.10.14
+  * Bump slipset/deps-deploy 0.2.2 -> 0.2.5
+  * Bump clj-kondo/clj-kondo 2025.10.23 -> 2026.05.25
+  * Bump dev.weavejester/cljfmt 0.15.6 -> 0.16.4
+
 * 0.9.98 -- 2026-03-30
   * Add `:cookie-name` option
   * Add `:zodiac/skip-csrf` route data to disable CSRF protection per-route (uses compiled middleware for better performance)

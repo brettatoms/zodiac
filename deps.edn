@@ -8,15 +8,15 @@
         metosin/reitit {:mvn/version "0.10.1"}
         metosin/reitit-dev {:mvn/version "0.10.1"}
         metosin/reitit-middleware {:mvn/version "0.10.1"}
-        com.cnuernber/charred {:mvn/version "1.038"}
-        org.clojure/tools.logging {:mvn/version "1.3.0"}
+        com.cnuernber/charred {:mvn/version "1.039"}
+        org.clojure/tools.logging {:mvn/version "1.3.1"}
         ring/ring-anti-forgery {:mvn/version "1.4.0"}
-        ring/ring-core {:mvn/version "1.15.3"}
-        ring/ring-devel {:mvn/version "1.15.3"}
-        ring/ring-jetty-adapter {:mvn/version "1.15.3"}}
+        ring/ring-core {:mvn/version "1.15.5"}
+        ring/ring-devel {:mvn/version "1.15.5"}
+        ring/ring-jetty-adapter {:mvn/version "1.15.5"}}
  :aliases {:dev {:extra-paths ["development/src"]
-                 :extra-deps {com.taoensso/telemere {:mvn/version "1.2.0"}
-                              com.taoensso/telemere-slf4j {:mvn/version "1.2.0"}}
+                 :extra-deps {com.taoensso/telemere {:mvn/version "1.2.1"}
+                              com.taoensso/telemere-slf4j {:mvn/version "1.2.1"}}
                  ;; OmitStackTraceInFastThrow add stacktraces when running in a
                  ;; repl that might otherwise have been optimized out, see
                  ;; https://docs.cider.mx/cider/troubleshooting.html#empty-java-stacktraces
@@ -26,20 +26,20 @@
            :test {:extra-paths ["test"]
                   :extra-deps {com.gfredericks/test.chuck {:mvn/version "0.2.15"}
                                lambdaisland/kaocha {:mvn/version "1.91.1392"}
-                               nubank/matcher-combinators {:mvn/version "3.9.2"}
-                               org.clojure/test.check {:mvn/version "1.1.2"}
+                               nubank/matcher-combinators {:mvn/version "3.10.0"}
+                               org.clojure/test.check {:mvn/version "1.1.3"}
                                peridot/peridot {:mvn/version "0.5.4"}
                                tortue/spy {:mvn/version "2.15.0"}}
                   :main-opts ["-m" "kaocha.runner"]}
 
-           :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.11"}
-                          slipset/deps-deploy {:mvn/version "0.2.2"}}
+           :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.14"}
+                          slipset/deps-deploy {:mvn/version "0.2.5"}}
                    :ns-default build}
 
            ;; clojure -M:clj-kondo
-           :clj-kondo {:replace-deps {clj-kondo/clj-kondo {:mvn/version "2025.10.23"}}
+           :clj-kondo {:replace-deps {clj-kondo/clj-kondo {:mvn/version "2026.05.25"}}
                        :main-opts ["-m" "clj-kondo.main"]}
 
            ;; clojure -M:cljfmt check|fix
-           :cljfmt {:extra-deps {dev.weavejester/cljfmt {:mvn/version "0.15.6"}}
+           :cljfmt {:extra-deps {dev.weavejester/cljfmt {:mvn/version "0.16.4"}}
                     :main-opts ["-m" "cljfmt.main"]}}}

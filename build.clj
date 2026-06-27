@@ -61,7 +61,6 @@
                :target-dir class-dir})
   (b/jar (jar-opts opts)))
 
-
 (defn ci "Run the CI pipeline of tests (and build the JAR)." [opts]
   (test opts)
   (b/delete {:path "target"})
