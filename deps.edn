@@ -9,6 +9,14 @@
         metosin/reitit-dev {:mvn/version "0.10.1"}
         metosin/reitit-middleware {:mvn/version "0.10.1"}
         com.cnuernber/charred {:mvn/version "1.039"}
+
+        ;; Pin patched jackson to clear CVE-2026-54512/54513/54515. Jackson is
+        ;; only pulled in transitively (via reitit/jsonista); Zodiac itself uses
+        ;; charred for JSON, not jackson. These top-level coords win resolution.
+        com.fasterxml.jackson.core/jackson-core {:mvn/version "2.21.4"}
+        com.fasterxml.jackson.core/jackson-databind {:mvn/version "2.21.4"}
+        com.fasterxml.jackson.datatype/jackson-datatype-jsr310 {:mvn/version "2.21.4"}
+
         org.clojure/tools.logging {:mvn/version "1.3.1"}
         ring/ring-anti-forgery {:mvn/version "1.4.0"}
         ring/ring-core {:mvn/version "1.15.5"}
