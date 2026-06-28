@@ -1,0 +1,10 @@
+;; nvd-clojure / OWASP dependency-check configuration.
+;; Docs: https://github.com/rm-hull/nvd-clojure#configuration-options
+;;
+;; The NVD API key is read from the NVD_API_TOKEN environment variable,
+;; so it is intentionally NOT stored here.
+{;; Fail when the highest CVSS score across all dependencies is greater
+ ;; than this value. 6.9 means the build fails on CVSS >= 7.0 (the
+ ;; High/Critical range); lower-severity findings still appear in the
+ ;; report but do not break the build.
+ :fail-threshold 6.9}

@@ -42,4 +42,13 @@
 
            ;; clojure -M:cljfmt check|fix
            :cljfmt {:extra-deps {dev.weavejester/cljfmt {:mvn/version "0.16.4"}}
-                    :main-opts ["-m" "cljfmt.main"]}}}
+                    :main-opts ["-m" "cljfmt.main"]}
+
+           ;; OWASP/NVD dependency vulnerability scan. Isolated from the
+           ;; project deps to avoid classpath interference; the production
+           ;; classpath is passed as the scan target:
+           ;;   clojure -M:nvd "$(clojure -Spath)"
+           ;; Requires an NVD API key in the NVD_API_TOKEN env var.
+           :nvd {:replace-deps {nvd-clojure/nvd-clojure {:mvn/version "5.3.0"}}
+                 :replace-paths []
+                 :main-opts ["-m" "nvd.task.check" "nvd-config.edn"]}}}
