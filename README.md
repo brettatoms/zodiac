@@ -14,7 +14,7 @@ What Zodiac includes by default:
  - Request and response handing with [Ring](https://github.com/ring-clojure/ring).
  - A Jetty server (though Jetty can be turned off)
  - Automatic Hiccup-based HTML rendering using [Chassis](https://github.com/onionpancakes/chassis).
- - Websocket support
+ - Async requests, SSE and websocket support
  - File streaming
  - Flash messages
  - Cookies and secure session handler

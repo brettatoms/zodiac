@@ -162,3 +162,57 @@ runnable example in `examples/async-sse/`.
                ;; SSE is a GET the browser can't attach a CSRF token to.
                :zodiac/skip-csrf true}]])
 ```
+
+## Streaming and Threads
+
+It is worth being precise about what async mode does and does not change for a
+long-lived or large response (a big file download, an SSE stream, etc.).
+
+The response body is written to the client with a **blocking** write. Ring's
+Jetty adapter writes the body by calling
+`ring.core.protocols/write-body-to-stream` synchronously against a blocking
+output stream — it does not use the Servlet non-blocking `WriteListener` API.
+This is true in both synchronous and asynchronous mode. So streaming always
+occupies a thread for the full duration of the write.
+
+What async mode changes is **which** thread is occupied:
+
+- **Synchronous mode:** the handler runs and the body is written on the Jetty
+  request-worker thread. That worker is held for the entire stream. A slow
+  client or a long-lived stream ties up one of Jetty's limited request threads
+  (50 by default) for its whole lifetime.
+- **Asynchronous mode:** the handler returns immediately and the Jetty request
+  worker is released. The body write happens later, on whatever thread calls
+  `respond`. If you call `respond` from a `future` or your own executor, the
+  blocking write occupies a thread from *that* pool, not Jetty's request pool.
+
+In other words, async mode does not make the write non-blocking — it lets you
+move the blocking write off Jetty's request-worker pool so slow clients and
+long streams don't exhaust it.
+
+### Making the blocking write cheap with virtual threads
+
+On JDK 21+ the simplest way to scale blocking streams is to run them on virtual
+threads, where a parked (blocked-on-I/O) thread costs almost nothing. Zodiac
+passes `:jetty` options straight through to the Ring Jetty adapter, so you can
+hand Jetty a thread pool backed by a virtual-thread executor without any
+framework-specific option:
+
+```clojure
+(import '[org.eclipse.jetty.util.thread QueuedThreadPool]
+        '[java.util.concurrent Executors])
+
+(z/start
+ {:routes routes
+  :async? true
+  :jetty {:thread-pool
+          (doto (QueuedThreadPool.)
+            (.setVirtualThreadsExecutor
+             (Executors/newVirtualThreadPerTaskExecutor)))}})
+```
+
+With this, a long download or stream parks a cheap virtual thread instead of a
+platform request worker, so the server can hold a very large number of
+concurrent slow connections. This is a Jetty configuration concern rather than a
+Zodiac feature — Zodiac stays a preconfigured Ring app and lets the adapter own
+the threading model.
