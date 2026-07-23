@@ -1,5 +1,19 @@
 # Change Log
 
+* 1.0.xxx -- Unreleased
+  * Add the top-level `:async?` option to run the server in async mode. This enables Jetty async mode and installs an adapter so synchronous and asynchronous handlers can coexist.
+  * Add the `:zodiac/async?` route data to opt a route's handler into the async (3-arity `[request respond raise]`) contract. Handlers are synchronous by default, so ordinary handlers keep working in async mode. This supersedes the experimental async support from 0.9.98, which required every handler to be written in 3-arity form.
+  * Support the `:zodiac.core/async?` and `:zodiac.core/skip-csrf` keyword forms (i.e. `::z/async?` and `::z/skip-csrf` when `zodiac.core` is aliased to `z`) as aliases for `:zodiac/async?` and `:zodiac/skip-csrf`.
+  * Add the `examples/async-sse` example demonstrating a Server-Sent Events stream alongside a synchronous handler.
+  * Add documentation for async requests (`doc/async.md`), including how streaming interacts with request threads and a virtual-thread thread-pool recipe.
+  * Add a weekly OWASP/NVD dependency vulnerability scan (`.github/workflows/security-scan.yml`) and the `:nvd` alias.
+  * Harden GitHub Actions workflows against supply-chain attacks by pinning actions to commit SHAs, and add Dependabot for GitHub Actions.
+  * Pin patched Jackson (2.22.1) to clear CVE-2026-54512/54513/54515. Jackson is only pulled in transitively; Zodiac uses charred for JSON.
+  * Bump org.clojure/clojure 1.12.4 -> 1.12.5
+  * Bump com.cnuernber/charred 1.039 -> 1.041
+  * Bump nubank/matcher-combinators 3.10.0 -> 3.10.1
+  * Bump dev.weavejester/cljfmt 0.16.4 -> 0.16.5
+
 * 0.9.100 -- 2026-06-27
   * Bump com.cnuernber/charred 1.038 -> 1.039
   * Bump org.clojure/tools.logging 1.3.0 -> 1.3.1
