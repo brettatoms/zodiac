@@ -445,7 +445,9 @@
         app (test-client {:routes [[""
                                     ["/protected" {:post post-handler}]
                                     ["/unprotected" {:zodiac/skip-csrf true
-                                                     :post post-handler}]]]})]
+                                                     :post post-handler}]
+                                    ["/unprotected-alias" {::z/skip-csrf true
+                                                           :post post-handler}]]]})]
     (testing "route without :zodiac/skip-csrf requires CSRF token"
       (let [resp (-> (peri/session app)
                      (peri/request "/protected"
@@ -458,6 +460,16 @@
     (testing "route with :zodiac/skip-csrf true allows POST without token"
       (let [resp (-> (peri/session app)
                      (peri/request "/unprotected"
+                                   :request-method :post
+                                   :content-type "text/html"
+                                   :body "anything")
+                     :response)]
+        (is (match? {:status 200
+                     :body "<!DOCTYPE html><div>posted</div>"} resp))))
+
+    (testing "route with ::z/skip-csrf (:zodiac.core/skip-csrf) also allows POST without token"
+      (let [resp (-> (peri/session app)
+                     (peri/request "/unprotected-alias"
                                    :request-method :post
                                    :content-type "text/html"
                                    :body "anything")
@@ -1348,3 +1360,107 @@
       (remove-method ig/halt-key! ::test-component-a)
       (remove-method ig/halt-key! ::test-component-b)
       (remove-method ig/init-key ::failing-component))))
+
+;;; ==========================================================================
+;;; Async Handler Tests
+;;; ==========================================================================
+
+(defn async-request
+  "Drive the 3-arity (async) Ring handler and block until the response or error
+  is delivered. Returns the response map, or a map with an :error key if the
+  raise callback was invoked. Times out after 2 seconds."
+  [app request]
+  (let [result (promise)]
+    (app request
+         (fn [response] (deliver result response))
+         (fn [error] (deliver result {:error error})))
+    (deref result 2000 {:error ::timeout})))
+
+(deftest async-mode-sync-handlers
+  ;; In async mode Jetty invokes every handler with three arguments. Zodiac's
+  ;; adapter must let ordinary synchronous handlers keep working so sync and
+  ;; async handlers can coexist in the same app.
+  (testing "a synchronous handler works when the server is in async mode"
+    (let [app (test-client {:async? true
+                            :routes ["/" (fn [_req] {:status 200 :body "sync"})]})]
+      (is (match? {:status 200 :body "sync"}
+                  (async-request app {:request-method :get :uri "/"})))))
+
+  (testing "a synchronous handler defined with constantly works in async mode"
+    ;; constantly (and comp/partial) defeat runtime arity detection, so the
+    ;; adapter must rely on route data rather than inspecting the handler.
+    (let [app (test-client {:async? true
+                            :routes ["/" (constantly {:status 200 :body "const"})]})]
+      (is (match? {:status 200 :body "const"}
+                  (async-request app {:request-method :get :uri "/"})))))
+
+  (testing "a synchronous handler returning a vector renders html in async mode"
+    (let [app (test-client {:async? true
+                            :routes ["/" (constantly [:hi])]})]
+      (is (match? {:status 200
+                   :headers {"content-type" "text/html"}
+                   :body "<!DOCTYPE html><hi></hi>"}
+                  (async-request app {:request-method :get :uri "/"})))))
+
+  (testing "a synchronous handler that throws flows through exception handling"
+    (let [app (test-client {:async? true
+                            :routes ["/" (fn [_req] (throw (ex-info "boom" {})))]})]
+      (is (match? {:status 500 :body "Unknown error"}
+                  (async-request app {:request-method :get :uri "/"}))))))
+
+(deftest async-mode-async-handlers
+  (testing "a :zodiac/async? handler responds via the respond callback"
+    (let [app (test-client {:async? true
+                            :routes ["/" {:zodiac/async? true
+                                          :handler (fn [_req respond _raise]
+                                                     (respond {:status 200 :body "async"}))}]})]
+      (is (match? {:status 200 :body "async"}
+                  (async-request app {:request-method :get :uri "/"})))))
+
+  (testing ":zodiac.core/async? (::z/async?) also enables the async contract"
+    (let [app (test-client {:async? true
+                            :routes ["/" {::z/async? true
+                                          :handler (fn [_req respond _raise]
+                                                     (respond {:status 200 :body "async"}))}]})]
+      (is (match? {:status 200 :body "async"}
+                  (async-request app {:request-method :get :uri "/"})))))
+
+  (testing "the async response callback may run on another thread"
+    (let [app (test-client {:async? true
+                            :routes ["/" {:zodiac/async? true
+                                          :handler (fn [_req respond _raise]
+                                                     (future (respond {:status 200 :body "off-thread"})))}]})]
+      (is (match? {:status 200 :body "off-thread"}
+                  (async-request app {:request-method :get :uri "/"})))))
+
+  (testing "returning a vector from an async handler renders html"
+    (let [app (test-client {:async? true
+                            :routes ["/" {:zodiac/async? true
+                                          :handler (fn [_req respond _raise]
+                                                     (future (respond [:hi])))}]})]
+      (is (match? {:status 200
+                   :headers {"content-type" "text/html"}
+                   :body "<!DOCTYPE html><hi></hi>"}
+                  (async-request app {:request-method :get :uri "/"})))))
+
+  (testing "the request context is available to async handlers"
+    (let [handler (spy/spy (fn [_req respond _raise] (respond {:status 200})))
+          app (test-client {:async? true
+                            :request-context {:db "something"}
+                            :routes ["/" {:name :root
+                                          :zodiac/async? true
+                                          :handler handler}]})]
+      (async-request app {:request-method :get :uri "/"})
+      (is (match? {::z/context {:db "something"}}
+                  (first (spy/first-call handler))))))
+
+  (testing "errors raised via the raise callback flow through exception handling"
+    (let [app (test-client {:async? true
+                            :routes ["/" {:zodiac/async? true
+                                          :handler (fn [_req _respond raise]
+                                                     (future (raise (ex-info "boom" {}))))}]})]
+      ;; The exception middleware handles the raised error in the async path just
+      ;; as it does for synchronous handlers, turning it into a 500 response
+      ;; rather than propagating the raw exception to the outer raise callback.
+      (is (match? {:status 500 :body "Unknown error"}
+                  (async-request app {:request-method :get :uri "/"}))))))

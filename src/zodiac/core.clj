@@ -172,52 +172,96 @@
 
 (defn- create-anti-forgery-middleware
   "Creates a compiled anti-forgery middleware.
-   Routes can disable CSRF protection by setting :zodiac/skip-csrf to true in route data.
+   Routes can disable CSRF protection by setting :zodiac/skip-csrf true in route
+   data (or the equivalent :zodiac.core/skip-csrf, i.e. ::z/skip-csrf when
+   zodiac.core is aliased to z).
    Also supports the deprecated :anti-forgery-whitelist option for backwards compatibility."
   [anti-forgery-config]
   {:name ::anti-forgery
    :compile (fn [route-data _opts]
-              (when-not (:zodiac/skip-csrf route-data)
+              (when-not (or (:zodiac/skip-csrf route-data)
+                            (::skip-csrf route-data))
                 (fn [handler]
                   (wrap-anti-forgery handler anti-forgery-config))))})
 
+(defn- async-adapter-middleware
+  "Adapts synchronous (1-arity) handlers to work when the server runs in async
+  mode. When Jetty is in async mode every handler is invoked with three
+  arguments (request, respond, raise). Ring and Reitit do not upgrade a
+  synchronous handler's arity, so a plain `(fn [request] ...)` handler would
+  throw an ArityException.
+
+  Handlers are synchronous by default. A route opts into the asynchronous
+  3-arity contract by setting `:zodiac/async? true` (or the equivalent
+  `:zodiac.core/async? true`, i.e. `::z/async?` when zodiac.core is aliased to
+  `z`) in its route data; only then is the handler called with the respond and
+  raise callbacks. Otherwise the handler is called synchronously and its return
+  value is passed to respond, with any thrown exception passed to raise.
+
+  This is compiled middleware so the sync/async decision is made per-route at
+  router build time rather than by inspecting the handler at request time (which
+  is unreliable for wrapped handlers, e.g. `constantly`, `comp` or `partial`).
+
+  Installed only when the server runs in async mode, so it adds no overhead to
+  synchronous applications."
+  []
+  {:name ::async-adapter
+   :compile (fn [route-data _opts]
+              (let [async? (or (:zodiac/async? route-data)
+                               (::async? route-data))]
+                (fn [handler]
+                  (fn
+                    ([request]
+                     (handler request))
+                    ([request respond raise]
+                     (if async?
+                       (handler request respond raise)
+                       (try
+                         (respond (handler request))
+                         (catch Throwable t
+                           (raise t)))))))))})
+
 (defmethod ig/init-key ::middleware
-  [_ {:keys [context cookie-attrs cookie-name error-handlers session-store anti-forgery-config]}]
-  [;; Read and write cookies
-   wrap-cookies
-   ;; Read and write the session cookie
-   [wrap-session (cond-> {:flash true
-                          :cookie-attrs cookie-attrs
-                          :store session-store}
-                   cookie-name (assoc :cookie-name cookie-name))]
-   ;; Coerce query-params & form-params
-   parameters/parameters-middleware
-   ;; Parse multipart data
-   multipart/multipart-middleware
-   ;; content-negotiation
-   muuntaja.middle/format-negotiate-middleware
-   ;; Encoding response body
-   muuntaja.middle/format-response-middleware
-   ;; Handle exceptions
-   (create-exception-middleware error-handlers)
-   ;; Flash messages in the session
-   wrap-flash
-   ;; Check CSRF tokens (compiled middleware - skips routes with :zodiac/skip-csrf true)
-   (create-anti-forgery-middleware anti-forgery-config)
-   ;; decoding request body
-   muuntaja.middle/format-request-middleware
-   ;; coercing response body
-   coercion/coerce-response-middleware
-   ;; coercing request parameters
-   coercion/coerce-request-middleware
-   ;; coerce exceptions
-   coercion/coerce-exceptions-middleware
-   ;; Populate the request context
-   [context-middleware context]
-   ;; Bind the request globals
-   bind-globals-middleware
-   ;; Vectors that are returned by handlers will be rendered to html
-   render-html-middleware])
+  [_ {:keys [async? context cookie-attrs cookie-name error-handlers session-store anti-forgery-config]}]
+  (cond-> [;; Read and write cookies
+           wrap-cookies
+           ;; Read and write the session cookie
+           [wrap-session (cond-> {:flash true
+                                  :cookie-attrs cookie-attrs
+                                  :store session-store}
+                           cookie-name (assoc :cookie-name cookie-name))]
+           ;; Coerce query-params & form-params
+           parameters/parameters-middleware
+           ;; Parse multipart data
+           multipart/multipart-middleware
+           ;; content-negotiation
+           muuntaja.middle/format-negotiate-middleware
+           ;; Encoding response body
+           muuntaja.middle/format-response-middleware
+           ;; Handle exceptions
+           (create-exception-middleware error-handlers)
+           ;; Flash messages in the session
+           wrap-flash
+           ;; Check CSRF tokens (compiled middleware - skips routes with :zodiac/skip-csrf true)
+           (create-anti-forgery-middleware anti-forgery-config)
+           ;; decoding request body
+           muuntaja.middle/format-request-middleware
+           ;; coercing response body
+           coercion/coerce-response-middleware
+           ;; coercing request parameters
+           coercion/coerce-request-middleware
+           ;; coerce exceptions
+           coercion/coerce-exceptions-middleware
+           ;; Populate the request context
+           [context-middleware context]
+           ;; Bind the request globals
+           bind-globals-middleware
+           ;; Vectors that are returned by handlers will be rendered to html
+           render-html-middleware]
+    ;; When running in async mode, adapt synchronous handlers to the 3-arity
+    ;; async contract. Placed innermost (closest to the handler) so that its
+    ;; respond callback still flows back out through render-html-middleware.
+    async? (conj (async-adapter-middleware))))
 
 (defmethod ig/init-key ::default-handler [_ _]
   (reitit.ring/create-default-handler))
@@ -302,6 +346,10 @@
     [:port :int]
     [:reload-per-request?  :boolean]
     [:print-request-diffs? :boolean]
+    ;; Run the server in async mode. Enables Jetty async mode and installs the
+    ;; adapter that lets synchronous and async (3-arity) handlers coexist.
+    ;; Routes opt into the async handler contract with :zodiac/async? route data.
+    [:async? :boolean]
     ;; Start the default jetty. Defaults to true.
     [:start-server? :boolean]
     [:error-handlers [:map-of :any fn?]]
@@ -328,9 +376,11 @@
      (do
        (when (seq (:anti-forgery-whitelist options))
          (log/warn ":anti-forgery-whitelist is deprecated. Use :zodiac/skip-csrf route data instead."))
-       (let [config (cond-> {::cookie-store {:secret (:cookie-secret options)}
+       (let [async? (:async? options false)
+             config (cond-> {::cookie-store {:secret (:cookie-secret options)}
                              ::anti-forgery-config {:whitelist (:anti-forgery-whitelist options [])}
-                             ::middleware {:context (:request-context options {})
+                             ::middleware {:async? async?
+                                           :context (:request-context options {})
                                            :cookie-attrs (:cookie-attrs options {:http-only true
                                                                                  :same-site :lax})
                                            :cookie-name (:cookie-name options)
@@ -350,7 +400,10 @@
                                     :reload-per-request? (:reload-per-request? options false)}
                              ::jetty {:handler (ig/ref ::app)
                                       :options (merge {:port (or (:port options) 3000)
-                                                       :join? false}
+                                                       :join? false
+                                                       ;; Top-level :async? enables Jetty async mode.
+                                                       ;; An explicit :jetty {:async? ...} still wins.
+                                                       :async? async?}
                                                       (:jetty options))}}
                       ;; Remove the ::jetty key if start-server? is false
                       (not (:start-server? options true))

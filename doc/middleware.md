@@ -23,6 +23,9 @@ Middleware executes in this order (outermost to innermost for requests, reversed
 15. **Globals Binding** - Binds `*request*`, `*router*`, `*session*`
 16. **HTML Rendering** - Converts vector responses to HTML
 
+When the server runs in [async mode](async.md), an additional innermost adapter
+is installed that lets synchronous and asynchronous handlers coexist.
+
 ## Adding Custom Middleware
 
 ### Application-Level
@@ -104,6 +107,9 @@ Use the `:zodiac/skip-csrf` route data to disable CSRF protection for specific r
    ["/admin"
     ["/users" {:post create-user}]]])  ;; CSRF required (default)
 ```
+
+You can also write the marker as `:zodiac.core/skip-csrf`, which is convenient
+when `zodiac.core` is aliased to `z` (`::z/skip-csrf`).
 
 This approach is preferred because:
 - CSRF settings are co-located with route definitions

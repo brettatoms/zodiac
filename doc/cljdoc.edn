@@ -6,4 +6,5 @@
                     ["Sessions & Flash" {:file "doc/sessions.md"}]
                     ["Error Handling" {:file "doc/error-handling.md"}]
                     ["Middleware" {:file "doc/middleware.md"}]
+                    ["Async Requests" {:file "doc/async.md"}]
                     ["Extensions" {:file "doc/extensions.md"}]]]}
