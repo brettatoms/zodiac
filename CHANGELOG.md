@@ -1,6 +1,6 @@
 # Change Log
 
-* 1.0.114 -- 2026-07-23
+* 1.0.119 -- 2026-07-23
   * Add the top-level `:async?` option to run the server in async mode. This enables Jetty async mode and installs an adapter so synchronous and asynchronous handlers can coexist.
   * Add the `:zodiac/async?` route data to opt a route's handler into the async (3-arity `[request respond raise]`) contract. Handlers are synchronous by default, so ordinary handlers keep working in async mode. This supersedes the experimental async support from 0.9.98, which required every handler to be written in 3-arity form.
   * Support the `:zodiac.core/async?` and `:zodiac.core/skip-csrf` keyword forms (i.e. `::z/async?` and `::z/skip-csrf` when `zodiac.core` is aliased to `z`) as aliases for `:zodiac/async?` and `:zodiac/skip-csrf`.
