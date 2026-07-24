@@ -52,12 +52,10 @@
            :pom-data  (pom-template version))))
 
 (defn jar [opts]
-  (let [{:keys [version] :as opts} (jar-opts opts)]
-    (b/write-pom {:class-dir class-dir
-                  :lib lib
-                  :version version
-                  :basis @basis
-                  :src-dirs ["src"]})
+  (let [opts (jar-opts opts)]
+    ;; Pass the full opts (incl. :pom-data) so the POM carries the license,
+    ;; SCM, etc. Clojars rejects a POM without a license.
+    (b/write-pom opts)
     (b/copy-dir {:src-dirs ["src" "resources"]
                  :target-dir class-dir})
     (b/jar opts)))
