@@ -11,6 +11,12 @@ permissions:
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
+    # Serialize with the snapshot deploy (test.yml) so a release and a snapshot
+    # deploy never run concurrently and race on Clojars metadata. Pushing a
+    # release commit and its tag together otherwise triggers both at once.
+    concurrency:
+      group: clojars-deploy
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:

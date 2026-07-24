@@ -47,6 +47,11 @@ jobs:
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
+    # Serialize with the release deploy (test-and-release.yml) so a snapshot and
+    # a release deploy never run concurrently and race on Clojars metadata.
+    concurrency:
+      group: clojars-deploy
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
