@@ -12,6 +12,10 @@ permissions:
 jobs:
   nvd-scan:
     runs-on: ubuntu-latest
+    # Fail fast if the scan gets stuck (e.g. a slow NVD sync) instead of
+    # burning the 6h GitHub default. A cold DB sync completes in well under
+    # this with an API key + a low :delay; cached runs are much faster.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
@@ -22,6 +26,17 @@ jobs:
         uses: DeLaGuardo/setup-clojure@4c7a6f613e5089821bb3bb2a33a3ee115578580d # 13.6.1
         with:
           cli: '1.12.0.1479'
+      # Cache the OWASP dependency-check H2 database so runs after the first
+      # only fetch incremental NVD updates instead of the full ~370k records.
+      # run_id makes each run save a fresh cache; restore-keys restores the
+      # most recent prior DB to update from.
+      - name: Cache NVD database
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-utils/*/data
+          key: nvd-db-${{ github.run_id }}
+          restore-keys: |
+            nvd-db-
       - name: Run OWASP/NVD dependency scan
         # Scans the production classpath; fails on CVSS >= 7.0 (see nvd-config.edn)
         run: clojure -M:nvd "$(clojure -Spath)"

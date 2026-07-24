@@ -7,4 +7,12 @@
  ;; than this value. 6.9 means the build fails on CVSS >= 7.0 (the
  ;; High/Critical range); lower-severity findings still appear in the
  ;; report but do not break the build.
- :fail-threshold 6.9}
+ :fail-threshold 6.9
+
+ :nvd-api
+ {;; Milliseconds between NVD API requests. nvd-clojure defaults to 5000ms,
+  ;; which makes the initial full database sync (~370k records) take 6+ hours
+  ;; and hit the CI job timeout. NVD allows ~50 requests / 30s with an API key
+  ;; (the NVD_API_TOKEN env var), so ~600ms is safe and cuts the cold sync to
+  ;; well under an hour. Subsequent runs only fetch incremental updates.
+  :delay 600}}
