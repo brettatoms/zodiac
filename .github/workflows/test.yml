@@ -10,7 +10,33 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Setup Clojure
+        uses: DeLaGuardo/setup-clojure@4c7a6f613e5089821bb3bb2a33a3ee115578580d # 13.6.1
+        with:
+          cli: '1.12.0.1479'
+      - name: Cache All The Things
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.gitlibs
+            ~/.clojure
+            ~/.cpcache
+          key: ${{ runner.os }}-${{ hashFiles('**/deps.edn') }}
+      - name: Lint
+        run: clojure -M:clj-kondo --lint src
+      - name: Check formatting
+        run: clojure -M:cljfmt check
+
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -34,17 +60,14 @@ jobs:
             ~/.clojure
             ~/.cpcache
           key: ${{ runner.os }}-${{ hashFiles('**/deps.edn') }}
-      - name: Lint
-        run: clojure -M:clj-kondo --lint src
-      - name: Check formatting
-        run: clojure -M:cljfmt check
-      - name: Run All Tests
-        run: clojure -T:build ci :snapshot true
+      - name: Run tests
+        run: clojure -M:test
 
-  # Deploy the snapshot once, after both matrix jobs pass, so the two Java
-  # versions don't race each other deploying the same snapshot to Clojars.
+  # Deploy the snapshot once, after the checks and both test matrix jobs pass,
+  # so the two Java versions don't race each other deploying the same snapshot
+  # to Clojars.
   deploy-snapshot:
-    needs: build
+    needs: [checks, test]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     # Serialize with the release deploy (test-and-release.yml) so a snapshot and
@@ -72,7 +95,11 @@ jobs:
             ~/.cpcache
           key: ${{ runner.os }}-${{ hashFiles('**/deps.edn') }}
       - name: Deploy Snapshot
-        run: clojure -T:build deploy :snapshot true
+        # Build the jar/pom in this job before deploying: deploy reuses the
+        # artifacts in target/, which the separate test jobs don't share.
+        run: |
+          clojure -T:build jar :snapshot true
+          clojure -T:build deploy :snapshot true
         env:
           CLOJARS_PASSWORD: ${{secrets.DEPLOY_TOKEN}}
           CLOJARS_USERNAME: ${{secrets.DEPLOY_USERNAME}}
