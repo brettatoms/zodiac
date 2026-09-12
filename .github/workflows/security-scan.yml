@@ -23,7 +23,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
       - name: Setup Clojure
-        uses: DeLaGuardo/setup-clojure@4c7a6f613e5089821bb3bb2a33a3ee115578580d # 13.6.1
+        uses: DeLaGuardo/setup-clojure@6d46099eae24853c33c0482f2bb54edf4f1a4c74 # 13.7.0
         with:
           cli: '1.12.0.1479'
       # Cache the OWASP dependency-check H2 database so runs after the first
